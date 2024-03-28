@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "==1.4.1"
+numpy = "==1.22.2"
+geopy = "==2.3.0"
+python-dateutil = "==2.8.2"
+ortools = "*"
+matplotlib = "*"
+nbformat = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

@@ -1,0 +1,6 @@
+/data/AssignmentDatabases/*
+/data/OrderDatabases/*
+/data/TruckDatabases/*
+/data/TransactionDatabases/*
+/data/Plotting/*
+*.iml
