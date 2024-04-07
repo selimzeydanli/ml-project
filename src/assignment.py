@@ -76,7 +76,7 @@ def solve_milp(distance_matrix, list_data):
 def run():
     global truck_data, order_data
     # Inside the loop for each day
-    for day in range(30):
+    for day in range(1):
         # Calculate the date for the current day
         current_date = datetime.datetime(2023, 11, 24) + datetime.timedelta(days=day)
         current_date_str = current_date.strftime("%Y-%m-%d")
@@ -94,12 +94,13 @@ def run():
             'Arr. Lat': order_data['Arr. Lat'],
             'Arr. Lon': order_data['Arr. Lon']
         })
-
+        list_data = list_data.dropna()
+        print (list_data)
         # Calculate distances between vehicles and suppliers
         distance_matrix = [[calculate_distance((list_data.iloc[i]['Dep. Lat'], list_data.iloc[i]['Dep. Lon']),
-                                               (list_data.iloc[j]['Arr. Lat'], list_data.iloc[j]['Arr. Lon']))
-                            for j in range(len(order_data))] for i in range(len(truck_data))]
-
+                                               (list_data.iloc[i]['Arr. Lat'], list_data.iloc[i]['Arr. Lon']))
+                            for i in range(len(list_data))]]
+        print (distance_matrix)
         # Solve MILP problem and get Assignments dataframe
         assignments_df = solve_milp(distance_matrix, list_data)
 
