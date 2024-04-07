@@ -1,5 +1,7 @@
+import datetime
 import json
 import os
+import random
 import shutil
 from pathlib import Path
 
@@ -59,5 +61,9 @@ def clean_generated_data():
         if file == '.gitkeep':
             continue
         empty_folder(os.path.join(get_data_dir(), file))
+
+def get_random_time(day):
+    random_time = datetime.time(hour=random.randint(0, 23), minute=random.randint(0, 59), second=random.randint(0, 59))
+    return datetime.datetime.combine(day, random_time).strftime("%Y-%m-%d %H:%M:%S")
 
 # clean_generated_data()

@@ -15,7 +15,8 @@ import pandas as pd
 from geopy.distance import geodesic
 from ortools.linear_solver import pywraplp
 
-from src.utils import read_json_to_dataframe, get_assignment_dbs_dir, empty_folder, get_truck_dbs_dir, get_order_dbs_dir
+from src.utils import read_json_to_dataframe, get_assignment_dbs_dir, empty_folder, get_truck_dbs_dir, \
+    get_order_dbs_dir, get_random_time
 
 empty_folder(get_assignment_dbs_dir())
 
@@ -65,7 +66,8 @@ def solve_milp(distance_matrix, list_data):
                     'Arr. Lon': list_data.iloc[j]['Arr. Lon'],
                     'SupID': order_data.iloc[j]['SupID'],
                     'TruckID': truck_data.iloc[i]['TruckID'],
-                    'TrailerID': truck_data.iloc[i]['TrailerID']
+                    'TrailerID': truck_data.iloc[i]['TrailerID'],
+                    'AssignTime': get_random_time(datetime.date.today())
                 })
 
     return pd.DataFrame(assignments)
@@ -110,3 +112,5 @@ def run():
                                orient='records')
         print(
             f'Assignments for {current_date_str} saved to: {get_assignment_dbs_dir()}Assignments - {current_date_str}.json')
+
+run () #TODO : Delete
