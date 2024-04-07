@@ -27,23 +27,29 @@ suppliers = suppliers_df.sample(30).to_dict(orient='records')
 
 
 def run():
+    last_order_id = 0
     # Loop through each day between the start and end dates
     for day in pd.date_range(start_date, end_date):
         # remove time from day
-        day = day.strftime("%Y-%m-%d")
+        ready_day = day.strftime("%Y-%m-%d")
 
         # Collect orders to a new array. each element in the array should represent a single order
         orders = []
-        for i in range(1, 31):
+        for i in range(random.randint(10, 20)):
             random_supplier = random.choice(suppliers)
+            order_day = (day - timedelta(days=random.randint(7, 10))).strftime("%Y-%m-%d")
             print(random.choice(suppliers))
-            orders.append({'OrderID': i,
-                           'OrderDate': day,
+            orders.append({'OrderID': last_order_id,
+                           'OrderDate': order_day,
+                           'ReadyDate': ready_day,
                            'SupID': random_supplier['SupID'],
                            'Arr. Lat': random_supplier['Arr. Lat'],
                            'Arr. Lon': random_supplier['Arr. Lon']})
+            last_order_id += 1
 
         # create a dataframe from the orders array
         order_df = pd.DataFrame(orders)
 
-        order_df.to_json(os.path.join(order_dbs_dir, f'OrderDatabase-{day}.json'), orient='records')
+        order_df.to_json(os.path.join(order_dbs_dir, f'OrderDatabase-{ready_day}.json'), orient='records')
+
+# run() # TODO : DELETE
