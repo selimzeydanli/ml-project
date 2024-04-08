@@ -34,7 +34,7 @@ def calculate_distance(coord1, coord2):
 
 # Function to solve the MILP problem
 def solve_milp(distance_matrix, list_data):
-    num_vehicles = len(distance_matrix)
+    num_vehicles = len(distance_matrix[0])
     num_suppliers = len(distance_matrix[0])
 
     # Create variables for the assignment problem
@@ -70,7 +70,7 @@ def solve_milp(distance_matrix, list_data):
                     'SupID': order_data.iloc[j]['SupID'],
                     'TruckID': truck_data.iloc[i]['TruckID'],
                     'TrailerID': truck_data.iloc[i]['TrailerID'],
-                    'AssignTime': get_random_time(datetime.date.today())
+                    'AssignTime': get_random_time(datetime.datetime.strptime(list_data.iloc[i]['ReadyDate'], "%Y-%m-%d"))
                 })
 
     return pd.DataFrame(assignments)
@@ -79,7 +79,7 @@ def solve_milp(distance_matrix, list_data):
 def run():
     global truck_data, order_data
     # Inside the loop for each day
-    for day in range(1):
+    for day in range(30):
         # Calculate the date for the current day
         current_date = datetime.datetime(2023, 11, 24) + datetime.timedelta(days=day)
         current_date_str = current_date.strftime("%Y-%m-%d")
@@ -90,7 +90,7 @@ def run():
         OrderDatabasejsonfilename = os.path.join(get_order_dbs_dir(), f'OrderDatabase-{current_date_str}.json')
         order_data = read_json_to_dataframe(OrderDatabasejsonfilename)
 
-        list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon']], how='cross')
+        list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon', 'ReadyDate']], how='cross')
 
         print("list data is printing")
         print(list_data)
