@@ -26,9 +26,11 @@ solver = pywraplp.Solver.CreateSolver('SCIP')
 if not solver:
     raise Exception("Solver not found!")
 
+
 # Function to calculate distance between two coordinates
 def calculate_distance(coord1, coord2):
     return geodesic(coord1, coord2).kilometers
+
 
 # Function to solve the MILP problem
 def solve_milp(distance_matrix, list_data):
@@ -49,7 +51,8 @@ def solve_milp(distance_matrix, list_data):
         solver.Add(solver.Sum(x[i, j] for i in range(num_vehicles)) == 1)
 
     # Define the objective function
-    solver.Minimize(solver.Sum(distance_matrix[i][j] * x[i, j] for i in range(num_vehicles) for j in range(num_suppliers)))
+    solver.Minimize(
+        solver.Sum(distance_matrix[i][j] * x[i, j] for i in range(num_vehicles) for j in range(num_suppliers)))
 
     # Solve the MILP
     solver.Solve()
@@ -87,22 +90,24 @@ def run():
         OrderDatabasejsonfilename = os.path.join(get_order_dbs_dir(), f'OrderDatabase-{current_date_str}.json')
         order_data = read_json_to_dataframe(OrderDatabasejsonfilename)
 
-        # Prepare dataframe "List" with required columns
-        list_data = pd.DataFrame({
-            'Dep. Lat': truck_data['Dep. Lat'],
-            'Dep. Lon': truck_data['Dep. Lon'],
-            'Arr. Lat': order_data['Arr. Lat'],
-            'Arr. Lon': order_data['Arr. Lon']
-        })
-        list_data = list_data.dropna()
-        print (list_data)
+
+        list_data = order_data.merge(truck_data,how='cross')
+
+        # list_data = list_data.dropna()
+        print("list data is printing")
+        print(list_data)
+        print("printed")
         # Calculate distances between vehicles and suppliers
         distance_matrix = [[calculate_distance((list_data.iloc[i]['Dep. Lat'], list_data.iloc[i]['Dep. Lon']),
                                                (list_data.iloc[i]['Arr. Lat'], list_data.iloc[i]['Arr. Lon']))
-                            for i in range(len(list_data))]]
-        print (distance_matrix)
+                            for i in range(len(list_data))] for i in range(len(list_data))]
+        print("distances are printing")
+        #print(len(distance_matrix.columns))
+        print(len(distance_matrix[0]))
+        print(distance_matrix)
+        print("distance printed")
         # Solve MILP problem and get Assignments dataframe
-        assignments_df = solve_milp(distance_matrix, list_data)
+        assignments_df = solve_milp(distance_matrix[0], list_data)
 
         # Print Assignments dataframe without index numbers
         print(f"Assignments DataFrame for {current_date_str}:")
@@ -114,4 +119,5 @@ def run():
         print(
             f'Assignments for {current_date_str} saved to: {get_assignment_dbs_dir()}Assignments - {current_date_str}.json')
 
-run () #TODO : Delete
+
+run()  # TODO : Delete
