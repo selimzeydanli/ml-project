@@ -45,6 +45,7 @@ def generate_transactions(day):
         merged_data['TrailerType'] = truck_db['TrailerType']
         merged_data['OrderID'] = order_db['OrderID']
         merged_data['OrderDate'] = order_db['OrderDate']
+        merged_data['ReadyDate'] = order_db['ReadyDate']
     except KeyError as e:
         print(f"Error merging dataframes: {e}")
         raise
@@ -64,3 +65,4 @@ def run():
     # Create Transactions for 30 consecutive days
     for day in range(30):
         generate_transactions(day)
+run()

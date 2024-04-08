@@ -52,4 +52,4 @@ def run():
 
         order_df.to_json(os.path.join(order_dbs_dir, f'OrderDatabase-{ready_day}.json'), orient='records')
 
-# run() # TODO : DELETE
+run() # TODO : DELETE
