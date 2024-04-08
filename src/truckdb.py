@@ -27,27 +27,30 @@ def run():
         trucks_count = random.randint(40, 60)
         pending_trucks_count = random.randint(1, 10)
 
-        for i in range(trucks_count):
-            location = get_random_coordinates()
-            trucks.append({'TruckID': last_id,
-                           'TrailerID': last_id,
-                           'TrailerType': ['box', 'hanger'][i % 2],
-                           'Dep. Lat': location['latitude'],
-                           'Dep. Lon': location['longitude']})
-            last_id+=1
-        for i in range(pending_trucks_count):
-            location = get_random_coordinates(True)
-            trucks.append({'TruckID': last_id,
-                           'TrailerID': last_id,
-                           'TrailerType': ['box', 'hanger'][i % 2],
-                           'Dep. Lat': location['latitude'],
-                           'Dep. Lon': location['longitude']})
-            last_id+=1
+        # if day is start_date, generate trucks for pending trucks
+        if day == start_date.strftime("%Y-%m-%d"):
+            last_id = generate_trucks(last_id, trucks, trucks_count, True)
+        else:
+            # generate trucks for the rest of the days
+            last_id = generate_trucks(last_id, trucks, trucks_count, False)
+            last_id = generate_trucks(last_id, trucks, pending_trucks_count, True)
 
         # create a dataframe from the trucks array
         truck_df = pd.DataFrame(trucks)
 
         truck_df.to_json(os.path.join(get_truck_dbs_dir(), f'TruckDatabase-{day}.json'), orient='records')
+
+
+def generate_trucks(last_id, trucks, trucks_count, pending):
+    for i in range(trucks_count):
+        location = get_random_coordinates(pending)
+        trucks.append({'TruckID': last_id,
+                       'TrailerID': last_id,
+                       'TrailerType': ['box', 'hanger'][i % 2],
+                       'Dep. Lat': location['latitude'],
+                       'Dep. Lon': location['longitude']})
+        last_id += 1
+    return last_id
 
 
 def get_random_location(pending=False):
