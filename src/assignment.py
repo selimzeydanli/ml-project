@@ -90,24 +90,22 @@ def run():
         OrderDatabasejsonfilename = os.path.join(get_order_dbs_dir(), f'OrderDatabase-{current_date_str}.json')
         order_data = read_json_to_dataframe(OrderDatabasejsonfilename)
 
+        list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon']], how='cross')
 
-        list_data = order_data.merge(truck_data,how='cross')
-
-        # list_data = list_data.dropna()
         print("list data is printing")
         print(list_data)
         print("printed")
         # Calculate distances between vehicles and suppliers
         distance_matrix = [[calculate_distance((list_data.iloc[i]['Dep. Lat'], list_data.iloc[i]['Dep. Lon']),
-                                               (list_data.iloc[i]['Arr. Lat'], list_data.iloc[i]['Arr. Lon']))
-                            for i in range(len(list_data))] for i in range(len(list_data))]
+                                               (list_data.iloc[j]['Arr. Lat'], list_data.iloc[j]['Arr. Lon']))
+                            for j in range(len(order_data))] for i in range(len(truck_data))]
         print("distances are printing")
         #print(len(distance_matrix.columns))
         print(len(distance_matrix[0]))
         print(distance_matrix)
         print("distance printed")
         # Solve MILP problem and get Assignments dataframe
-        assignments_df = solve_milp(distance_matrix[0], list_data)
+        assignments_df = solve_milp(distance_matrix, list_data)
 
         # Print Assignments dataframe without index numbers
         print(f"Assignments DataFrame for {current_date_str}:")
