@@ -27,7 +27,7 @@ suppliers = suppliers_df.sample(30).to_dict(orient='records')
 
 
 def run():
-    last_order_id = 0
+    last_order_id = 1
     # Loop through each day between the start and end dates
     for day in pd.date_range(start_date, end_date):
         # remove time from day

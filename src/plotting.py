@@ -51,7 +51,7 @@ def generate_and_save_plot(day):
     dep_longitudes = assignments['Dep. Lon']
     arr_latitudes = assignments['Arr. Lat']
     arr_longitudes = assignments['Arr. Lon']
-
+    print (assignments)
     # Plot the diagram with lines
     plt.figure(figsize=(10, 8))
 
@@ -63,7 +63,7 @@ def generate_and_save_plot(day):
 
     # Draw lines between each vehicle and supplier
     for i in range(len(dep_latitudes)):
-        plt.plot([dep_latitudes[i], arr_latitudes[i]], [dep_longitudes[i], arr_longitudes[i]], color='black', linestyle='-', linewidth=0.5)
+       plt.plot([dep_latitudes[i], arr_latitudes[i]], [dep_longitudes[i], arr_longitudes[i]], color='black', linestyle='-', linewidth=0.5)
 
     plt.title('Vehicle Assignments with Lines')
     plt.xlabel('Latitude')
@@ -107,3 +107,4 @@ def run():
     # Create plots for 30 consecutive days
     for day in range(30):
         generate_and_save_plot(day)
+run()

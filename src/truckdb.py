@@ -42,13 +42,19 @@ def run():
 
 
 def generate_trucks(last_id, trucks, trucks_count, pending):
+    coordinates = []
     for i in range(trucks_count):
         location = get_random_coordinates(pending)
+        if (pending == False) :
+            while (coordinates.__contains__(location)):
+                location = get_random_location(False)
+
         trucks.append({'TruckID': last_id,
                        'TrailerID': last_id,
                        'TrailerType': ['box', 'hanger'][i % 2],
                        'Dep. Lat': location['latitude'],
                        'Dep. Lon': location['longitude']})
+        coordinates.append(location)
         last_id += 1
     return last_id
 

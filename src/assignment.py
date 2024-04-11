@@ -34,7 +34,7 @@ def calculate_distance(coord1, coord2):
 
 # Function to solve the MILP problem
 def solve_milp(distance_matrix, list_data):
-    num_vehicles = len(distance_matrix[0])
+    num_vehicles = len(distance_matrix)
     num_suppliers = len(distance_matrix[0])
 
     # Create variables for the assignment problem
@@ -44,8 +44,8 @@ def solve_milp(distance_matrix, list_data):
             x[i, j] = solver.IntVar(0, 1, f'x[{i},{j}]')
 
     # Define constraints
-    for i in range(num_vehicles):
-        solver.Add(solver.Sum(x[i, j] for j in range(num_suppliers)) == 1)
+    # for i in range(num_vehicles):
+    #     solver.Add(solver.Sum(x[i, j] for j in range(num_suppliers)) == 1)
 
     for j in range(num_suppliers):
         solver.Add(solver.Sum(x[i, j] for i in range(num_vehicles)) == 1)
@@ -61,6 +61,7 @@ def solve_milp(distance_matrix, list_data):
     assignments = []
     for i in range(num_vehicles):
         for j in range(num_suppliers):
+            print(f'x[i,j]:{x[i,j].solution_value()}')
             if x[i, j].solution_value():
                 assignments.append({
                     'Dep. Lat': list_data.iloc[i]['Dep. Lat'],
@@ -93,6 +94,7 @@ def run():
         list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon', 'ReadyDate']], how='cross')
 
         print("list data is printing")
+        print ("list data")
         print(list_data)
         print("printed")
         # Calculate distances between vehicles and suppliers
