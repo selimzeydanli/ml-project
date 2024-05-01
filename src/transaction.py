@@ -5,9 +5,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
-from src.utils import get_order_dbs_dir, read_json_to_dataframe, get_truck_dbs_dir, get_plotting_dir, empty_folder
+from src.utils import get_order_dbs_dir, read_json_to_dataframe, get_truck_dbs_dir, get_plotting_dir, empty_folder, \
+    get_transaction_dbs_dir
 
 empty_folder(get_plotting_dir())
+empty_folder(get_transaction_dbs_dir())
 
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float):
     # Convert latitude and longitude from degrees to radians
@@ -122,6 +124,7 @@ orderDate = datetime(2023, 11, 26)
 
 endLoopDate = datetime(2023, 12, 25)
 
+job_id = 1
 while orderDate <= endLoopDate:
     orderDateStr = orderDate.strftime("%Y-%m-%d")
     truckDateFirst = orderDate - timedelta(days=1)
@@ -136,7 +139,7 @@ while orderDate <= endLoopDate:
     truck_2_df = read_json_to_dataframe(os.path.join(get_truck_dbs_dir(), f'TruckDatabase-{truckDateSecondStr}.json'))
     truck_df = pd.concat([truck_1_df, truck_2_df]).reset_index(drop=True)
 
-    job_id = 1
+
     job_entries = []
 
     for order in order_df.iterrows():
@@ -167,7 +170,6 @@ while orderDate <= endLoopDate:
     checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
                                                      "JobDuration"])
 
-    job_id = 1
     job_entries = []
     truck_df_copy = truck_df.copy()
     port_lat = 38.42
@@ -209,9 +211,9 @@ while orderDate <= endLoopDate:
                 status = "Free"
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
-                             v * 50, tripstart_time, v, ready_datetime, ready_datetime + timedelta(hours=6),
-                             port_arrival, day_name, ferry_date_time, arrival_tarragona, arrival_inditex,
-                             unloading_complete_time, status]
+                             v * 50, tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), v, orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_inditex.strftime("%Y-%m-%d %H:%M:%S"),
+                             unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
                 job_entries.append(job_entry)
 
@@ -220,7 +222,7 @@ while orderDate <= endLoopDate:
                 break
 
         if not job_entry:
-            job_entry = [job_id, order_id, sup_id, order_type, "Nan", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN",
+            job_entry = [job_id, order_id, sup_id, order_type, "Nan", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN",
                          "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN"]
             job_entries.append(job_entry)
             job_id += 1
@@ -228,10 +230,10 @@ while orderDate <= endLoopDate:
     checkout_df = pd.DataFrame(job_entries,
                                columns=["JobID", "OrderID", "SupID", "TrailerType", "TruckID", "TruckLocation",
                                         "CustomerLocation",
-                                        "Distance", "JobDatetime", "JobDuration", "ReadyDatetime", "TakeoffDatetime",
+                                        "Distance", "JobDatetime", "JobDuration", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
                                         "PortArrivalDatetime", "DayName", "FerryDateTime", "ArrivalTarragona",
                                         "ArrivalInditex", "UnloadingCompleteTime", "Status"])
 
-    checkout_df.to_json(os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}.json'), orient='records', lines=True)
+    checkout_df.to_json(os.path.join(get_transaction_dbs_dir(), f'TransactionDatabase-{orderDateStr}.json'), orient='records')
     plot_coordinates(checkout_df["TruckLocation"], checkout_df["CustomerLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
     orderDate = orderDate + timedelta(days=1)
