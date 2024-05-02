@@ -11,6 +11,7 @@ python-dateutil = "==2.8.2"
 ortools = "*"
 matplotlib = "*"
 nbformat = "*"
+cartopy = "*"
 
 [dev-packages]
 
