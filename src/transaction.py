@@ -157,9 +157,9 @@ while orderDate <= endLoopDate:
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
 
-        trip_duration = distance / 50
+        trip_duration = round((distance / 50),2)
 
-        job_starttime = str(subtract_hours_from_datetime(ready_datetime, trip_duration))
+        job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
 
         job_entry = [job_id, order_id, sup_id, closest_truck_id, distance, job_starttime, trip_duration]
         job_entries.append(job_entry)
@@ -201,7 +201,7 @@ while orderDate <= endLoopDate:
 
             if tripstart_time >= available_time:
                 dist_to_port = haversine(port_lat, port_long, origin_lat, origin_long)
-                duration_to_port = dist_to_port / 50
+                duration_to_port = round(dist_to_port / 50,2)
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
@@ -211,7 +211,7 @@ while orderDate <= endLoopDate:
                 status = "Free"
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
-                             v * 50, tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), v, orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                             round(v*50,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), v, orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
                              port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_inditex.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
