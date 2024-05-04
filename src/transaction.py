@@ -157,7 +157,7 @@ while orderDate <= endLoopDate:
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
 
-        trip_duration = round((distance / 50),2)
+        trip_duration = round(distance / 50,3)
 
         job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
 
@@ -168,7 +168,7 @@ while orderDate <= endLoopDate:
         truck_df = truck_df[truck_df["TruckID"] != closest_truck_id]
 
     checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
-                                                     "JobDuration"])
+                                                     "JobDuration(h)"])
 
     job_entries = []
     truck_df_copy = truck_df.copy()
@@ -229,11 +229,11 @@ while orderDate <= endLoopDate:
 
     checkout_df = pd.DataFrame(job_entries,
                                columns=["JobID", "OrderID", "SupID", "TrailerType", "TruckID", "TruckLocation",
-                                        "CustomerLocation",
-                                        "Distance", "JobDatetime", "JobDuration", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
+                                        "SupplierLocation",
+                                        "Distance", "JobDatetime", "JobDuration(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
                                         "PortArrivalDatetime", "DayName", "FerryDateTime", "ArrivalTarragona",
                                         "ArrivalInditex", "UnloadingCompleteTime", "Status"])
 
     checkout_df.to_json(os.path.join(get_transaction_dbs_dir(), f'TransactionDatabase-{orderDateStr}.json'), orient='records')
-    plot_coordinates(checkout_df["TruckLocation"], checkout_df["CustomerLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
+    plot_coordinates(checkout_df["TruckLocation"], checkout_df["SupplierLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
     orderDate = orderDate + timedelta(days=1)
