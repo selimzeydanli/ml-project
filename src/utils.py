@@ -56,9 +56,13 @@ def empty_folder(dbs_dir):
         if file == '.gitkeep':
             continue
         current_file = os.path.join(dbs_dir, file)
-        if os.path.isdir(current_file):
-            shutil.rmtree(current_file)
-        os.remove(current_file)
+        try:
+            if os.path.exists(current_file):
+                if os.path.isdir(current_file):
+                    shutil.rmtree(current_file)
+                os.remove(current_file)
+        except Exception as e:
+            print('Error during delete, continue')
 
 def clean_generated_data():
     print("Deleting old data")

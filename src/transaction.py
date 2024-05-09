@@ -267,7 +267,7 @@ while orderDate <= endLoopDate:
                 status = "Free"
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
-                             round(v*50,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), v, orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                             round(v*50,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
                              port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_inditex.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
