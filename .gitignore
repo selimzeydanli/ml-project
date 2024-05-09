@@ -3,4 +3,5 @@
 /data/TruckDatabases/*
 /data/TransactionDatabases/*
 /data/Plotting/*
+/data/TruckEntirePlotting/*
 *.iml

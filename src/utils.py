@@ -35,6 +35,9 @@ def get_transaction_dbs_dir() -> str:
 def get_plotting_dir() -> str:
     return os.path.join(get_data_dir(), 'Plotting')
 
+def get_truck_plotting_dir() -> str:
+    return os.path.join(get_data_dir(), 'TruckEntirePlotting')
+
 # define a function to read json into dataframe
 def read_json_to_dataframe(filename: str) -> pd.DataFrame:
     with open(filename, 'r') as file:
@@ -52,7 +55,10 @@ def empty_folder(dbs_dir):
         # skip .gitkeep file
         if file == '.gitkeep':
             continue
-        os.remove(os.path.join(dbs_dir, file))
+        current_file = os.path.join(dbs_dir, file)
+        if os.path.isdir(current_file):
+            shutil.rmtree(current_file)
+        os.remove(current_file)
 
 def clean_generated_data():
     print("Deleting old data")

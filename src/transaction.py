@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 
 from src.utils import get_order_dbs_dir, read_json_to_dataframe, get_truck_dbs_dir, get_plotting_dir, empty_folder, \
-    get_transaction_dbs_dir
+    get_transaction_dbs_dir, get_truck_plotting_dir
 
 empty_folder(get_plotting_dir())
 empty_folder(get_transaction_dbs_dir())
+empty_folder(get_truck_plotting_dir())
 
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float):
     # Convert latitude and longitude from degrees to radians
@@ -125,6 +126,61 @@ orderDate = datetime(2023, 11, 26)
 endLoopDate = datetime(2023, 12, 25)
 
 job_id = 1
+
+
+def plot_truck(truck_id, dateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, inditexLocation):
+    # Handles for legend entries
+    handles = []
+    # Create a plot with a geo-projection
+    fig = plt.figure(figsize=(10, 5), dpi=300)
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+    ax.coastlines()
+
+    # Set the extent to cover Turkey (approximately)
+    ax.set_extent([-10, 45, 32, 50], crs=ccrs.PlateCarree())  # Longitude from 25 to 45, Latitude from 35 to 43
+    ax.gridlines(draw_labels=True)
+
+    sup_name = 'Supplier Location'
+    truck_name = 'Truck Location'
+    plot_truck_move(ax, handles, supplierLocation, truckLocation, sup_name, 'yellow', truck_name, 'red')
+    port_name = 'Port Location'
+    plot_truck_move(ax, handles, portLocation, supplierLocation, port_name, 'red', sup_name, 'blue')
+    tarragona_name = 'Tarragona'
+    plot_truck_move(ax, handles, tarragonaLocation, portLocation, tarragona_name, 'blue', 'Port', 'orange')
+    inditex_name = 'Inditex'
+    plot_truck_move(ax, handles, inditexLocation, tarragonaLocation, inditex_name, 'orange', tarragona_name, 'green')
+
+    ax.legend(handles, [truck_name, sup_name, port_name, tarragona_name, inditex_name])
+
+    if not os.path.exists(os.path.join(get_truck_plotting_dir(), dateStr)):
+        os.makedirs(os.path.join(get_truck_plotting_dir(), dateStr))
+    plt.savefig(os.path.join(get_truck_plotting_dir(), dateStr, f'{truck_id}') + '.jpg', format='jpg')
+    print(f'saved truck: {truck_id}')
+
+def plot_truck_move(ax, handles, portLocation, supplierLocation, name1, color1, name2, color2):
+
+    lat1 = supplierLocation[0]
+    lat2 = portLocation[0]
+    lon1 = supplierLocation[1]
+    lon2 = portLocation[1]
+    toPort = ax.plot([lon1, lon2], [lat1, lat2], color="black", linewidth=1, transform=ccrs.Geodetic(),
+                     label="Connection Line", linestyle="--")[0]
+    # Plot the origin point in blue
+    origin_point = \
+        ax.plot(lon1, lat1, marker='o', color=color1, markersize=7, transform=ccrs.Geodetic(), label=name1,
+                alpha=0.5)[0]
+    # Plot the destination point in red
+    destination_point = \
+        ax.plot(lon2, lat2, marker='o', color=color2, markersize=7, transform=ccrs.Geodetic(), label=name2,
+                alpha=0.5)[0]
+
+    # Add legend if not already added
+    if handles == []:
+        handles.extend([origin_point])
+    handles.extend([destination_point])
+
+
+
 while orderDate <= endLoopDate:
     orderDateStr = orderDate.strftime("%Y-%m-%d")
     truckDateFirst = orderDate - timedelta(days=1)
@@ -237,3 +293,12 @@ while orderDate <= endLoopDate:
     checkout_df.to_json(os.path.join(get_transaction_dbs_dir(), f'TransactionDatabase-{orderDateStr}.json'), orient='records')
     plot_coordinates(checkout_df["TruckLocation"], checkout_df["SupplierLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
     orderDate = orderDate + timedelta(days=1)
+
+    for row in checkout_df.values:
+        # plot truck
+        truckLocation = row[5]
+        supplierLocation = row[6]
+        portLocation = (port_lat, port_long)
+        tarragonaLocation = (41.1, 1.25)
+        inditexLocation = (41.6, -0.89)
+        plot_truck(row[4], orderDateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, inditexLocation)
