@@ -294,6 +294,21 @@ while orderDate <= endLoopDate:
     plot_coordinates(checkout_df["TruckLocation"], checkout_df["SupplierLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
     orderDate = orderDate + timedelta(days=1)
 
+    print ()
+    print ()
+
+    pd.set_option('display.max_columns', None)
+
+    try:
+        # Attempt to get the terminal width
+        terminal_width = os.get_terminal_size().columns
+    except OSError:
+        # If OSError occurs (not supported on Windows), set a default width
+        terminal_width = 160  # Set a default width suitable for your screen
+
+    # Set the display width
+    pd.set_option('display.width', terminal_width)
+    print (checkout_df)
     for row in checkout_df.values:
         # plot truck
         truckLocation = row[5]
