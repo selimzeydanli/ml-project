@@ -15,7 +15,7 @@ import pandas as pd
 from geopy.distance import geodesic
 from ortools.linear_solver import pywraplp
 
-from src.utils import read_json_to_dataframe, get_assignment_dbs_dir, empty_folder, get_truck_dbs_dir, \
+from utils import read_json_to_dataframe, get_assignment_dbs_dir, empty_folder, get_truck_dbs_dir, \
     get_order_dbs_dir, get_random_time
 
 empty_folder(get_assignment_dbs_dir())
@@ -43,9 +43,9 @@ def solve_milp(distance_matrix, list_data):
         for j in range(num_suppliers):
             x[i, j] = solver.IntVar(0, 1, f'x[{i},{j}]')
 
-    # Define constraints
-    # for i in range(num_vehicles):
-    #     solver.Add(solver.Sum(x[i, j] for j in range(num_suppliers)) == 1)
+    #Define constraints
+    for i in range(num_vehicles):
+         solver.Add(solver.Sum(x[i, j] for j in range(num_suppliers)) == 1)
 
     for j in range(num_suppliers):
         solver.Add(solver.Sum(x[i, j] for i in range(num_vehicles)) == 1)
@@ -82,7 +82,7 @@ def run():
     # Inside the loop for each day
     for day in range(30):
         # Calculate the date for the current day
-        current_date = datetime.datetime(2023, 11, 24) + datetime.timedelta(days=day)
+        current_date = datetime.datetime(2023, 11, 26) + datetime.timedelta(days=day)
         current_date_str = current_date.strftime("%Y-%m-%d")
 
         # Load TruckDatabase and OrderDatabase for the current day
@@ -91,7 +91,7 @@ def run():
         OrderDatabasejsonfilename = os.path.join(get_order_dbs_dir(), f'OrderDatabase-{current_date_str}.json')
         order_data = read_json_to_dataframe(OrderDatabasejsonfilename)
 
-        list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon', 'ReadyDate']], how='cross')
+        list_data = pd.merge(truck_data[['Dep. Lat', 'Dep. Lon']], order_data[['Arr. Lat', 'Arr. Lon', 'Ready_Date_and_Time']], how='cross')
 
         print("list data is printing")
         print ("list data")

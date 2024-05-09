@@ -60,8 +60,8 @@ def run():
                      'OrderDate': order_day,
                      'Ready_Date_and_Time': ready_date_and_time,
                      'SupID': random_supplier['SupID'],
-                     'Arr. Lat': random_supplier['Arr. Lat'],
-                     'Arr. Lon': random_supplier['Arr. Lon'],
+                     'Arr. Lat': round(random_supplier['Arr. Lat'],2),
+                     'Arr. Lon': round(random_supplier['Arr. Lon'],2),
                      'Trailer_Type': trailer_type}  # Add Trailer_Type key
             orders.append(order)
             last_order_id += 1
