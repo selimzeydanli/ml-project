@@ -1,38 +1,29 @@
-import random
 import json
+import random
 
+# Random float sayı üretmek için fonksiyon
+def generate_random_float(min_value, max_value, decimals):
+    return round(random.uniform(min_value, max_value), decimals)
 
-def generate_unique_values(start, end, count):
-    """Generate a list of unique random values within the specified range."""
-    values = set()
-    while len(values) < count:
-        values.add(round(random.uniform(start, end), 2))
-    return list(values)
+# Boş bir liste oluşturun
+data = []
 
+# 5000 rastgele öğe oluşturun
+for _ in range(5000):
+    # 123 ile 34230 (dahil) arasında rastgele bir tam sayı üretin
+    sup_id = random.randint(123, 34230)
 
-def generate_suppliers_data(num_items):
-    """Generate a dictionary with 1200 items and 3 keys: SupID, Arr. Lat, and Arr. Lon."""
-    suppliers_data = {}
-    sup_ids = generate_unique_values(127654, 458534, num_items)
-    arr_lats = generate_unique_values(37.2, 39.5, num_items)
-    arr_lons = generate_unique_values(27.1, 44.5, num_items)
+    # 37.2 ile 39.5 arasında 2 ondalıklı rastgele bir float sayı üretin
+    arr_lat = generate_random_float(37.2, 39.5, 2)
 
-    for i in range(num_items):
-        suppliers_data[i] = {
-            'SupID': sup_ids[i],
-            'Arr. Lat': arr_lats[i],
-            'Arr. Lon': arr_lons[i]
-        }
+    # 27.2 ile 44.4 arasında 2 ondalıklı rastgele bir float sayı üretin
+    arr_lon = generate_random_float(27.2, 44.4, 2)
 
-    return suppliers_data
+    # Öğeyi listeye ekleyin
+    data.append({'SupID': sup_id, 'Arr. Lat': arr_lat, 'Arr. Lon': arr_lon})
 
+# Listeyi JSON dosyası olarak kaydedin
+with open('C:\\Users\\Selim\\Desktop\\ml-project\\input\\suppliers_lstm.json', 'w') as outfile:
+    json.dump(data, outfile, indent=4)
 
-# Generate the dictionary with 1200 items
-suppliers_dict = generate_suppliers_data(1200)
-
-# Save the dictionary as a JSON file
-file_path = r'C:\Users\Selim\Desktop\ml-project\input\suppliers_lstm.json'
-with open(file_path, 'w') as file:
-    json.dump(suppliers_dict, file)
-
-print("JSON file saved successfully at:", file_path)
+print('Dictionary saved successfully to C:\\Users\\Selim\\Desktop\\ml-project\\input\\suppliers_lstm.json')
