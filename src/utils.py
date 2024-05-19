@@ -20,11 +20,20 @@ def get_input_dir() -> str:
 def get_suppliers_file() -> str:
     return os.path.join(get_input_dir(),'suppliers.json')
 
+def get_suppliers_lstm_file() -> str:
+    return os.path.join(get_input_dir(),'suppliers_lstm.json')
+
 def get_order_dbs_dir() -> str:
     return os.path.join(get_data_dir(), 'OrderDatabases')
 
+def get_order_dbs_lstm_dir() -> str:
+    return os.path.join(get_data_dir(), 'OrderDatabases_lstm')
+
 def get_truck_dbs_dir() -> str:
     return os.path.join(get_data_dir(), 'TruckDatabases')
+
+def get_truck_dbs_lstm_dir() -> str:
+    return os.path.join(get_data_dir(), 'TruckDatabases_lstm')
 
 def get_assignment_dbs_dir() -> str:
     return os.path.join(get_data_dir(), 'AssignmentDatabases')
@@ -32,6 +41,8 @@ def get_assignment_dbs_dir() -> str:
 def get_transaction_dbs_dir() -> str:
     return os.path.join(get_data_dir(), 'TransactionDatabases')
 
+def get_transaction_dbs_lstm_dir() -> str:
+    return os.path.join(get_data_dir(), 'TransactionDatabases_lstm')
 def get_plotting_dir() -> str:
     return os.path.join(get_data_dir(), 'Plotting')
 
