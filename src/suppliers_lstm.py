@@ -9,7 +9,7 @@ def generate_random_float(min_value, max_value, decimals):
 data = []
 
 # 5000 rastgele öğe oluşturun
-for _ in range(5000):
+for _ in range(1450):
     # 123 ile 34230 (dahil) arasında rastgele bir tam sayı üretin
     sup_id = random.randint(123, 34230)
 
