@@ -134,7 +134,7 @@ while orderDate <= endLoopDate:
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
 
-        trip_duration = round(random.randint(10, 80), 3)
+        trip_duration = round(random.randint(10, 80), 2)
 
         job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
 
@@ -178,7 +178,7 @@ while orderDate <= endLoopDate:
 
             if tripstart_time >= available_time:
                 dist_to_port = haversine(port_lat, port_long, origin_lat, origin_long)
-                duration_to_port = round(dist_to_port / 50,2)
+                duration_to_port = round(random.randint(10, 80), 2)
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
