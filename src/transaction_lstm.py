@@ -2,6 +2,7 @@ import os
 from math import radians, sin, cos, sqrt, atan2
 from datetime import datetime, timedelta
 import pandas as pd
+import random
 
 import cartopy.crs as ccrs
 
@@ -133,7 +134,7 @@ while orderDate <= endLoopDate:
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
 
-        trip_duration = round(distance / 50,3)
+        trip_duration = round(random.randint(10, 80), 3)
 
         job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
 
