@@ -134,7 +134,7 @@ while orderDate <= endLoopDate:
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
 
-        trip_duration = round(random.randint(10, 80), 2)
+        trip_duration = distance / round(random.randint(10, 80), 2)
 
         job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
 
@@ -165,6 +165,7 @@ while orderDate <= endLoopDate:
             orient="index")
         truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
 
+        #random_speed = round(random.randint(10, 80), 2)
         triptimes = {k: haversine(origin_lat, origin_long, v[0], v[1]) / 50 for k, v in truck_locations.items()}
         triptimes = {k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])}
 
@@ -175,11 +176,13 @@ while orderDate <= endLoopDate:
             available_time = datetime.strptime(available_time_str, '%Y-%m-%d %H:%M:%S')
             tripstart_time = subtract_hours_from_datetime(ready_datetime_str, v)
             ready_datetime = datetime.strptime(ready_datetime_str, '%Y-%m-%d %H:%M:%S')
+            random_speed = round(random.randint(10, 80), 2)
 
             if tripstart_time >= available_time:
                 dist_to_port = haversine(port_lat, port_long, origin_lat, origin_long)
-                duration_to_port = round(random.randint(10, 80), 2)
+                duration_to_port = distance / random_speed
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
+
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
@@ -188,8 +191,8 @@ while orderDate <= endLoopDate:
                 status = "Free"
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
-                             round(v*50,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
+                             round (v * random_speed,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), duration_to_port, day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
                 job_entries.append(job_entry)
@@ -208,7 +211,7 @@ while orderDate <= endLoopDate:
                                columns=["JobID", "OrderID", "SupID", "TrailerType", "TruckID", "TruckLocation",
                                         "SupplierLocation",
                                         "Distance", "JobDatetime", "JobDuration(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
-                                        "PortArrivalDatetime", "DayName", "FerryDateTime", "ArrivalTarragona",
+                                        "PortArrivalDatetime", "DurationToPort", "DayName", "FerryDateTime", "ArrivalTarragona",
                                         "ArrivalCustomer", "UnloadingCompleteTime", "Status"])
 
     checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}.json'), orient='records')
