@@ -107,7 +107,6 @@ while orderDate <= endLoopDate:
     truckDateFirst = orderDate - timedelta(days=1)
     truckDateFirstStr = truckDateFirst.strftime("%Y-%m-%d")
     truckDateSecond = orderDate - timedelta(days=2)
-
     truckDateSecondStr = truckDateSecond.strftime("%Y-%m-%d")
     print(orderDateStr, truckDateFirstStr, truckDateSecondStr)
 
@@ -128,8 +127,8 @@ while orderDate <= endLoopDate:
         origin_long = order[1]["Arr. Lon"]
 
         ready_datetime = order[1]["Ready_Date_and_Time"]
-
-        truck_locations = truck_df[truck_df["TrailerType"] == "box"].iloc[:, [3, 4]].to_dict(orient="index")
+        indexes = truck_df["TrailerType"] == "box" #order_type
+        truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
 
         closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
@@ -144,8 +143,8 @@ while orderDate <= endLoopDate:
         job_id += 1
         truck_df = truck_df[truck_df["TruckID"] != closest_truck_id]
 
-    checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
-                                                     "JobDuration(h)"])
+    #checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
+                                                     #"JobDuration(h)"])
 
     job_entries = []
     truck_df_copy = truck_df.copy()
@@ -171,6 +170,7 @@ while orderDate <= endLoopDate:
         job_entry = None
         for k, v in triptimes.items():
             truck_id = truck_df_copy.loc[k, "TruckID"]
+            truck_type = truck_df_copy.loc[k, "TrailerType"]
             available_time_str = truck_df_copy.loc[k, "Available_Date_and_Time"]
             available_time = datetime.strptime(available_time_str, '%Y-%m-%d %H:%M:%S')
             tripstart_time = subtract_hours_from_datetime(ready_datetime_str, v)
@@ -188,9 +188,9 @@ while orderDate <= endLoopDate:
                 arrival_customer = arrival_tarragona + timedelta(hours=6)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
-                job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
+                job_entry = [job_id, order_id, sup_id, order_type, truck_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
-                             round (v * random_speed,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                             round (v * random_speed,2), round(random_speed,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
                              port_arrival.strftime("%Y-%m-%d %H:%M:%S"), round(dist_to_port,2), round(duration_to_port,2), random_speed, day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
@@ -201,15 +201,15 @@ while orderDate <= endLoopDate:
                 break
 
         if not job_entry:
-            job_entry = [job_id, order_id, sup_id, order_type, "Nan", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN",
+            job_entry = [job_id, order_id, sup_id, order_type, "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN",
                          "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN"]
             job_entries.append(job_entry)
             job_id += 1
 
     checkout_df = pd.DataFrame(job_entries,
-                               columns=["JobID", "OrderID", "SupID", "TrailerType", "TruckID", "TruckLocation",
+                               columns=["JobID", "OrderID", "SupID", "RequestedTrailerType", "ProvidedTrailer Type", "TruckID", "TruckLocation",
                                         "SupplierLocation",
-                                        "Distance", "JobDatetime", "JobDuration(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
+                                        "DistanceToSupplier", "SpeedToSupplier(km/h)", "JobDatetime", "DurationToSupplier(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
                                         "PortArrivalDatetime", "DistanceToPort(km)", "DurationToPort(h)", "Speed(km/h)", "DayName", "FerryDateTime", "ArrivalTarragona",
                                         "ArrivalCustomer", "UnloadingCompleteTime", "Status"])
 
