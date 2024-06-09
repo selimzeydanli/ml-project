@@ -117,7 +117,7 @@ while orderDate <= endLoopDate:
 
 
     job_entries = []
-
+    # the next loop selects the closest truck to the supplier and removes this truck from the list of trucks
     for order in order_df.iterrows():
         order_id = order[1]["OrderID"]
         sup_id = order[1]["SupID"]
@@ -127,7 +127,7 @@ while orderDate <= endLoopDate:
         origin_long = order[1]["Arr. Lon"]
 
         ready_datetime = order[1]["Ready_Date_and_Time"]
-        indexes = truck_df["TrailerType"] == "box" #order_type
+        indexes = truck_df["TrailerType"] == order_type
         truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
 
@@ -143,9 +143,12 @@ while orderDate <= endLoopDate:
         job_id += 1
         truck_df = truck_df[truck_df["TruckID"] != closest_truck_id]
 
-    #checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
-                                                     #"JobDuration(h)"])
-
+    checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
+                                                     "JobDuration(h)"])
+    checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}-assignment.json'),
+                        orient='records')
+    # I need to investigate what is the purpose of the next loop
+    # Because for now it uses trucks from the list of left-over trucks and not the ones that were assigned
     job_entries = []
     truck_df_copy = truck_df.copy()
     port_lat = 38.42
@@ -216,9 +219,6 @@ while orderDate <= endLoopDate:
 
     checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}.json'), orient='records')
     orderDate = orderDate + timedelta(days=1)
-
-    print ()
-    print ()
 
     pd.set_option('display.max_columns', None)
 
