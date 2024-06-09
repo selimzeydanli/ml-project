@@ -165,8 +165,7 @@ while orderDate <= endLoopDate:
             orient="index")
         truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
 
-        #random_speed = round(random.randint(10, 80), 2)
-        triptimes = {k: haversine(origin_lat, origin_long, v[0], v[1]) / 50 for k, v in truck_locations.items()}
+        triptimes = {k: haversine(origin_lat, origin_long, v[0], v[1]) / round(random.randint(10, 80), 2) for k, v in truck_locations.items()}
         triptimes = {k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])}
 
         job_entry = None
@@ -180,7 +179,7 @@ while orderDate <= endLoopDate:
 
             if tripstart_time >= available_time:
                 dist_to_port = haversine(port_lat, port_long, origin_lat, origin_long)
-                duration_to_port = distance / random_speed
+                duration_to_port = dist_to_port / random_speed
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
 
                 day_name = get_day_name(port_arrival)
@@ -192,7 +191,7 @@ while orderDate <= endLoopDate:
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
                              round (v * random_speed,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), duration_to_port, day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
+                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), round(dist_to_port,2), round(duration_to_port,2), random_speed, day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
                 job_entries.append(job_entry)
@@ -211,7 +210,7 @@ while orderDate <= endLoopDate:
                                columns=["JobID", "OrderID", "SupID", "TrailerType", "TruckID", "TruckLocation",
                                         "SupplierLocation",
                                         "Distance", "JobDatetime", "JobDuration(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
-                                        "PortArrivalDatetime", "DurationToPort", "DayName", "FerryDateTime", "ArrivalTarragona",
+                                        "PortArrivalDatetime", "DistanceToPort(km)", "DurationToPort(h)", "Speed(km/h)", "DayName", "FerryDateTime", "ArrivalTarragona",
                                         "ArrivalCustomer", "UnloadingCompleteTime", "Status"])
 
     checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}.json'), orient='records')
