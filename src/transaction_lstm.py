@@ -206,6 +206,7 @@ while orderDate <= endLoopDate:
             job_entries.append(job_entry)
             job_id += 1
 
+
     checkout_df = pd.DataFrame(job_entries,
                                columns=["JobID", "OrderID", "SupID", "RequestedTrailerType", "ProvidedTrailer Type", "TruckID", "TruckLocation",
                                         "SupplierLocation",
