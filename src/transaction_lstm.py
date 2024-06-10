@@ -139,7 +139,7 @@ while orderDate <= endLoopDate:
 
         job_entry = [job_id, order_id, sup_id, closest_truck_id, distance, job_starttime, trip_duration]
         job_entries.append(job_entry)
-
+        # trial
         job_id += 1
         truck_df = truck_df[truck_df["TruckID"] != closest_truck_id]
 
