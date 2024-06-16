@@ -146,7 +146,7 @@ while orderDate <= endLoopDate:
         sup_id = order["SupID"]
         order_type = order["Trailer_Type"]
 
-        supplier_lattitude = order["Arr. Lat"]
+        supplier_latitude = order["Arr. Lat"]
         supplier_longitude = order["Arr. Lon"]
         ready_datetime = order["Ready_Date_and_Time"]
 
@@ -168,7 +168,7 @@ while orderDate <= endLoopDate:
         }
 
         closest_truck_id, distance = find_closest(
-            supplier_lattitude, supplier_longitude, truck_locations
+            supplier_latitude, supplier_longitude, truck_locations
         )
 
         if closest_truck_id is not None:
@@ -211,7 +211,7 @@ while orderDate <= endLoopDate:
         sup_id = order["SupID"]
         order_type = order["Trailer_Type"]
 
-        supplier_lattitude = order["Arr. Lat"]
+        supplier_latitude = order["Arr. Lat"]
         supplier_longitude = order["Arr. Lon"]
         ready_datetime_str = order["Ready_Date_and_Time"]
 
@@ -219,9 +219,9 @@ while orderDate <= endLoopDate:
         truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {
             k: {
-                "Departure_Lattitude": v["Dep. Lat"],
+                "Departure_Latitude": v["Dep. Lat"],
                 "Departure_Longitude": v["Dep. Lon"],
-                "Distance_to_supplier": haversine(supplier_lattitude, supplier_longitude, v["Dep. Lat"], v["Dep. Lon"]),
+                "Distance_to_supplier": haversine(supplier_latitude, supplier_longitude, v["Dep. Lat"], v["Dep. Lon"]),
                 "Random_Speed (km/h)": round(random.randint(10, 80), 2)
                 } for k, v in truck_locations.items()
         }
@@ -251,7 +251,7 @@ while orderDate <= endLoopDate:
             random_speed = round(random.randint(10, 80), 2)
 
             if tripstart_time >= available_time:
-                dist_to_port = haversine(port_lat, port_long, supplier_lattitude, supplier_longitude)
+                dist_to_port = haversine(port_lat, port_long, supplier_latitude, supplier_longitude)
                 duration_to_port = dist_to_port / random_speed
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
 
@@ -267,15 +267,14 @@ while orderDate <= endLoopDate:
                     "JobID": job_id,
                     "OrderID": order_id,
                     "SupID": sup_id,
-                    "RequestedTrailerType": order_type,
-                    "ProvidedTrailer Type": truck_type,
+                    "Trailer Type": truck_type,
                     "TruckID": truck_id,
-                    "TruckLocation": truck_locations[k],
-                    "SupplierLocation": (supplier_lattitude, supplier_longitude),
+                    "TruckLocation": (truck_locations[k]["Departure_Latitude"],truck_locations[k]["Departure_Longitude"]),
+                    "SupplierLocation": (supplier_latitude, supplier_longitude),
                     "DistanceToSupplier": round(truck_trip_information["Distance_to_supplier"], 2),
                     "SpeedToSupplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
                     "JobDatetime": tripstart_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "DurationToSupplier(h)": round(trip_duration, 2),
+                    "DurationToSupplier(h)": round(truck_trip_information["Duration_to_supplier (h)"], 2),
                     "OrderDate": orderDateStr,
                     "ReadyDatetime": ready_datetime_str,
                     "TakeoffDatetime": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
@@ -301,8 +300,7 @@ while orderDate <= endLoopDate:
                 "JobID": job_id,
                 "OrderID": order_id,
                 "SupID": sup_id,
-                "RequestedTrailerType": order_type,
-                "ProvidedTrailer Type": "NaN",
+                "Trailer Type": "NaN",
                 "TruckID": "NaN",
                 "TruckLocation": "NaN",
                 "SupplierLocation": "NaN",
