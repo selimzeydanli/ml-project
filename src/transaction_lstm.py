@@ -138,6 +138,7 @@ while orderDate <= endLoopDate:
     )
     truck_df = pd.concat([truck_1_df, truck_2_df]).reset_index(drop=True)
 
+
     # I am searching for the closest truck but each truck has a random speed which simulates different road conditions
     job_entries = []
     port_lat = 38.42
