@@ -77,7 +77,7 @@ def next_sunday(date):
 
 # Function to set the time to 23:30
 def set_time(date):
-    return date.replace(hour=23, minute=30)
+    return date.replace(hour=23, minute=30, second=0)
 
 
 # Assuming port_arrival is your initial date/time
@@ -143,7 +143,6 @@ while orderDate <= endLoopDate:
     job_entries = []
     port_lat = 38.42
     port_long = 27.14
-    job_id = 1
     for index, order in order_df.iterrows():
         order_id = order["OrderID"]
         sup_id = order["SupID"]
@@ -195,7 +194,7 @@ while orderDate <= endLoopDate:
 
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
-                ferry_date_time = next_sunday(port_arrival)
+                ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
                 arrival_customer = arrival_tarragona + timedelta(hours=6)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
