@@ -196,7 +196,8 @@ while orderDate <= endLoopDate:
                 ferry_date_time = next_sunday(port_arrival)
                 ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
-                arrival_customer = arrival_tarragona + timedelta(hours=6)
+                time_to_customer = 300 / round(random.randint(10, 80), 2)
+                arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
 
