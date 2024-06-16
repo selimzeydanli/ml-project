@@ -137,71 +137,8 @@ while orderDate <= endLoopDate:
         )
     )
     truck_df = pd.concat([truck_1_df, truck_2_df]).reset_index(drop=True)
-    truck_df_assignment = truck_df.copy()
 
-    job_entries = []
-    # the next loop selects the closest truck to the supplier and removes this truck from the list of trucks
-    for index, order in order_df.iterrows():
-        order_id = order["OrderID"]
-        sup_id = order["SupID"]
-        order_type = order["Trailer_Type"]
-
-        supplier_latitude = order["Arr. Lat"]
-        supplier_longitude = order["Arr. Lon"]
-        ready_datetime = order["Ready_Date_and_Time"]
-
-        indexes = truck_df_assignment["TrailerType"] == order_type
-        #truck information
-    #     {
-    #     "TruckID": 3431,                                  #0
-    #     "TrailerID": 3431,                                #1
-    #     "TrailerType": "hanger",                          #2
-    #     "Dep. Lat": 37.0,                                 #3
-    #     "Dep. Lon": 27.78,                                #4
-    #     "Available_Date_and_Time": "2023-01-04 08:00:00"  #5
-    #           },
-
-        # here we get "Dep. Lat" and "Dep. Lon" from all the trucks that can make it to the supplier
-        truck_locations = truck_df_assignment[indexes].iloc[:, [3, 4]].to_dict(orient="index")
-        truck_locations = {
-            k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()
-        }
-
-        closest_truck_id, distance = find_closest(
-            supplier_latitude, supplier_longitude, truck_locations
-        )
-
-        if closest_truck_id is not None:
-            trip_duration = distance / round(random.randint(10, 80), 2)
-            # ready_datetime = Monday 3PM
-            job_starttime = str(subtract_hours_from_datetime(ready_datetime, trip_duration))
-
-            job_entry = {
-                "JobID": job_id,
-                "OrderID": order_id,
-                "SupID": sup_id,
-                "TruckID": closest_truck_id,
-                "Distance": distance,
-                "JobDatetime": job_starttime,
-                "JobDuration(h)": trip_duration,
-            }
-            job_entries.append(job_entry)
-
-            # Remove the assigned truck from the dataframe
-            truck_df_assignment = truck_df_assignment.drop(closest_truck_id)
-
-            job_id += 1
-
-    checkout_df = pd.DataFrame(job_entries)
-    checkout_df.to_json(
-        os.path.join(
-            get_transaction_dbs_lstm_dir(),
-            f"TransactionDatabase_lstm-{orderDateStr}-assignment.json",
-        ),
-        orient="records",
-    )
-    # I need to investigate what is the purpose of the next loop
-    # Because for now it uses trucks from the list of left-over trucks and not the ones that were assigned
+    # I am searching for the closest truck but each truck has a random speed which simulates different road conditions
     job_entries = []
     port_lat = 38.42
     port_long = 27.14
