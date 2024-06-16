@@ -197,7 +197,7 @@ while orderDate <= endLoopDate:
                 ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
                 speed_to_customer = round(random.randint(10, 80), 2)
-                time_to_customer = 300 / speed_to_customer
+                time_to_customer = round(300 / speed_to_customer,2)
                 arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
@@ -224,7 +224,9 @@ while orderDate <= endLoopDate:
                     "DayName": day_name,
                     "FerryDateTime": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "ArrivalTarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
+                    "DistanceToCustomer(km)": "300",
                     "SpeedToCustomer": speed_to_customer,
+                    "DurationToCustomer(h)": time_to_customer,
                     "ArrivalCustomer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                     "UnloadingCompleteTime": unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "Status": status,
@@ -258,7 +260,9 @@ while orderDate <= endLoopDate:
                 "DayName": "NaN",
                 "FerryDateTime": "NaN",
                 "ArrivalTarragona": "NaN",
+                "DistanceToCustomer(km)": "NaN",
                 "SpeedToCustomer": "NaN",
+                "DurationToCustomer(h)": "NaN",
                 "ArrivalCustomer": "NaN",
                 "UnloadingCompleteTime": "NaN",
                 "Status": "NaN",
