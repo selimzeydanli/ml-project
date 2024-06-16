@@ -146,8 +146,8 @@ while orderDate <= endLoopDate:
         sup_id = order["SupID"]
         order_type = order["Trailer_Type"]
 
-        origin_lat = order["Arr. Lat"]
-        origin_long = order["Arr. Lon"]
+        supplier_lattitude = order["Arr. Lat"]
+        supplier_longitude = order["Arr. Lon"]
         ready_datetime = order["Ready_Date_and_Time"]
 
         indexes = truck_df_assignment["TrailerType"] == order_type
@@ -168,7 +168,7 @@ while orderDate <= endLoopDate:
         }
 
         closest_truck_id, distance = find_closest(
-            origin_lat, origin_long, truck_locations
+            supplier_lattitude, supplier_longitude, truck_locations
         )
 
         if closest_truck_id is not None:
@@ -211,36 +211,47 @@ while orderDate <= endLoopDate:
         sup_id = order["SupID"]
         order_type = order["Trailer_Type"]
 
-        origin_lat = order["Arr. Lat"]
-        origin_long = order["Arr. Lon"]
+        supplier_lattitude = order["Arr. Lat"]
+        supplier_longitude = order["Arr. Lon"]
         ready_datetime_str = order["Ready_Date_and_Time"]
 
         indexes = truck_df["TrailerType"] == order_type
         truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {
-            k: (v["Dep. Lat"], v["Dep. Lon"],round(random.randint(10, 80), 2)) for k, v in truck_locations.items()
+            k: {
+                "Departure_Lattitude": v["Dep. Lat"],
+                "Departure_Longitude": v["Dep. Lon"],
+                "Distance_to_supplier": haversine(supplier_lattitude, supplier_longitude, v["Dep. Lat"], v["Dep. Lon"]),
+                "Random_Speed (km/h)": round(random.randint(10, 80), 2)
+                } for k, v in truck_locations.items()
         }
 
         triptimes = {
-            k: haversine(origin_lat, origin_long, truck_position_and_speed[0], truck_position_and_speed[1]) / truck_position_and_speed[2]
-            for k, truck_position_and_speed in truck_locations.items()
+            k: {
+                "Distance_to_supplier": truck_information["Distance_to_supplier"],
+                "Duration_to_supplier (h)": truck_information["Distance_to_supplier"] / truck_information["Random_Speed (km/h)"],
+                "Random_Speed (km/h)": truck_information["Random_Speed (km/h)"]
+            }
+            for k, truck_information in truck_locations.items()
         }
+
+
         triptimes = {
-            k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])
+            k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1]["Duration_to_supplier (h)"])
         }
 
         job_entry = {}
-        for k, v in triptimes.items():
+        for k, truck_trip_information in triptimes.items():
             truck_id = truck_df.loc[k, "TruckID"]
             truck_type = truck_df.loc[k, "TrailerType"]
             available_time_str = truck_df.loc[k, "Available_Date_and_Time"]
             available_time = datetime.strptime(available_time_str, "%Y-%m-%d %H:%M:%S")
-            tripstart_time = subtract_hours_from_datetime(ready_datetime_str, v)
+            tripstart_time = subtract_hours_from_datetime(ready_datetime_str, truck_trip_information["Duration_to_supplier (h)"])
             ready_datetime = datetime.strptime(ready_datetime_str, "%Y-%m-%d %H:%M:%S")
             random_speed = round(random.randint(10, 80), 2)
 
             if tripstart_time >= available_time:
-                dist_to_port = haversine(port_lat, port_long, origin_lat, origin_long)
+                dist_to_port = haversine(port_lat, port_long, supplier_lattitude, supplier_longitude)
                 duration_to_port = dist_to_port / random_speed
                 port_arrival = ready_datetime + timedelta(hours=6 + duration_to_port)
 
@@ -260,9 +271,9 @@ while orderDate <= endLoopDate:
                     "ProvidedTrailer Type": truck_type,
                     "TruckID": truck_id,
                     "TruckLocation": truck_locations[k],
-                    "SupplierLocation": (origin_lat, origin_long),
-                    "DistanceToSupplier": round(v * random_speed, 2),
-                    "SpeedToSupplier(km/h)": speed_to_supplier,
+                    "SupplierLocation": (supplier_lattitude, supplier_longitude),
+                    "DistanceToSupplier": round(truck_trip_information["Distance_to_supplier"], 2),
+                    "SpeedToSupplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
                     "JobDatetime": tripstart_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "DurationToSupplier(h)": round(trip_duration, 2),
                     "OrderDate": orderDateStr,
