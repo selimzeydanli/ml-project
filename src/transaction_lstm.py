@@ -6,8 +6,13 @@ import random
 
 import cartopy.crs as ccrs
 
-from src.utils import get_order_dbs_lstm_dir, read_json_to_dataframe, get_truck_dbs_lstm_dir, empty_folder, \
-    get_transaction_dbs_lstm_dir
+from src.utils import (
+    get_order_dbs_lstm_dir,
+    read_json_to_dataframe,
+    get_truck_dbs_lstm_dir,
+    empty_folder,
+    get_transaction_dbs_lstm_dir,
+)
 
 
 empty_folder(get_transaction_dbs_lstm_dir())
@@ -28,7 +33,7 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float):
 
 def find_closest(origin_lat: float, origin_lon: float, points: dict):
     # dict: {id:(lat,long)}
-    min_distance = float('inf')
+    min_distance = float("inf")
     closest_point_id = None
 
     for point_id, point_coords in points.items():
@@ -50,25 +55,30 @@ def get_day_name(date):
     Returns:
     - A string representing the day name (e.g., 'Monday', 'Tuesday', etc.).
     """
-    return date.strftime('%A')
+    return date.strftime("%A")
 
 
 # Function to calculate the next Sunday from a given date
-#def next_sunday(date):
-    #days_until_sunday = (6 - date.weekday()) % 7
-    #return date + timedelta(days=days_until_sunday)
+# def next_sunday(date):
+# days_until_sunday = (6 - date.weekday()) % 7
+# return date + timedelta(days=days_until_sunday)
 
 from datetime import datetime, timedelta
+
 
 # Function to find the next Sunday from a given date
 def next_sunday(date):
     days_until_sunday = (6 - date.weekday() + 7) % 7  # Calculate days until next Sunday
-    next_sunday_date = date + timedelta(days=days_until_sunday)  # Add days to get to next Sunday
+    next_sunday_date = date + timedelta(
+        days=days_until_sunday
+    )  # Add days to get to next Sunday
     return next_sunday_date
+
 
 # Function to set the time to 23:30
 def set_time(date):
     return date.replace(hour=23, minute=30)
+
 
 # Assuming port_arrival is your initial date/time
 port_arrival = datetime.now()  # Example date/time, replace it with your actual value
@@ -79,10 +89,11 @@ next_sunday_date = next_sunday(port_arrival)
 # Set the time to 23:30
 ferry_date_time = set_time(next_sunday_date)
 
-def subtract_hours_from_datetime(input_datetime:str, hours_to_subtract:float):
+
+def subtract_hours_from_datetime(input_datetime: str, hours_to_subtract: float):
     # Convert input_datetime to datetime object if it's not already
     if not isinstance(input_datetime, datetime):
-        input_datetime = datetime.strptime(input_datetime, '%Y-%m-%d %H:%M:%S')
+        input_datetime = datetime.strptime(input_datetime, "%Y-%m-%d %H:%M:%S")
 
     # Calculate timedelta for the given hours
     subtract_timedelta = timedelta(hours=hours_to_subtract)
@@ -110,74 +121,112 @@ while orderDate <= endLoopDate:
     truckDateSecondStr = truckDateSecond.strftime("%Y-%m-%d")
     print(orderDateStr, truckDateFirstStr, truckDateSecondStr)
 
-    order_df = read_json_to_dataframe(os.path.join(get_order_dbs_lstm_dir(), f'OrderDatabase_lstm-{orderDateStr}.json'))
-    truck_1_df = read_json_to_dataframe(os.path.join(get_truck_dbs_lstm_dir(), f'TruckDatabase_lstm-{truckDateFirstStr}.json'))
-    truck_2_df = read_json_to_dataframe(os.path.join(get_truck_dbs_lstm_dir(), f'TruckDatabase_lstm-{truckDateSecondStr}.json'))
+    order_df = read_json_to_dataframe(
+        os.path.join(
+            get_order_dbs_lstm_dir(), f"OrderDatabase_lstm-{orderDateStr}.json"
+        )
+    )
+    truck_1_df = read_json_to_dataframe(
+        os.path.join(
+            get_truck_dbs_lstm_dir(), f"TruckDatabase_lstm-{truckDateFirstStr}.json"
+        )
+    )
+    truck_2_df = read_json_to_dataframe(
+        os.path.join(
+            get_truck_dbs_lstm_dir(), f"TruckDatabase_lstm-{truckDateSecondStr}.json"
+        )
+    )
     truck_df = pd.concat([truck_1_df, truck_2_df]).reset_index(drop=True)
-
+    truck_df_assignment = truck_df.copy()
 
     job_entries = []
     # the next loop selects the closest truck to the supplier and removes this truck from the list of trucks
-    for order in order_df.iterrows():
-        order_id = order[1]["OrderID"]
-        sup_id = order[1]["SupID"]
-        order_type = order[1]["Trailer_Type"]
+    for index, order in order_df.iterrows():
+        order_id = order["OrderID"]
+        sup_id = order["SupID"]
+        order_type = order["Trailer_Type"]
 
-        origin_lat = order[1]["Arr. Lat"]
-        origin_long = order[1]["Arr. Lon"]
+        origin_lat = order["Arr. Lat"]
+        origin_long = order["Arr. Lon"]
+        ready_datetime = order["Ready_Date_and_Time"]
 
-        ready_datetime = order[1]["Ready_Date_and_Time"]
-        indexes = truck_df["TrailerType"] == order_type
-        truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
-        truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
+        indexes = truck_df_assignment["TrailerType"] == order_type
+        truck_locations = truck_df_assignment[indexes].iloc[:, [3, 4]].to_dict(orient="index")
+        truck_locations = {
+            k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()
+        }
 
-        closest_truck_id, distance = find_closest(origin_lat, origin_long, truck_locations)
+        closest_truck_id, distance = find_closest(
+            origin_lat, origin_long, truck_locations
+        )
 
-        trip_duration = distance / round(random.randint(10, 80), 2)
+        if closest_truck_id is not None:
+            trip_duration = distance / round(random.randint(10, 80), 2)
+            job_starttime = str(subtract_hours_from_datetime(ready_datetime, trip_duration))
 
-        job_starttime = (str(subtract_hours_from_datetime(ready_datetime, trip_duration)))
+            job_entry = {
+                "JobID": job_id,
+                "OrderID": order_id,
+                "SupID": sup_id,
+                "TruckID": closest_truck_id,
+                "Distance": distance,
+                "JobDatetime": job_starttime,
+                "JobDuration(h)": trip_duration,
+            }
+            job_entries.append(job_entry)
 
-        job_entry = [job_id, order_id, sup_id, closest_truck_id, distance, job_starttime, trip_duration]
-        job_entries.append(job_entry)
-        # trial
-        job_id += 1
-        truck_df = truck_df[truck_df["TruckID"] != closest_truck_id]
+            # Remove the assigned truck from the dataframe
+            truck_df_assignment = truck_df_assignment.drop(closest_truck_id)
 
-    checkout_df = pd.DataFrame(job_entries, columns=["JobID", "OrderID", "SupID", "TruckID", "Distance", "JobDatetime",
-                                                     "JobDuration(h)"])
-    checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}-assignment.json'),
-                        orient='records')
+            job_id += 1
+
+    checkout_df = pd.DataFrame(job_entries)
+    checkout_df.to_json(
+        os.path.join(
+            get_transaction_dbs_lstm_dir(),
+            f"TransactionDatabase_lstm-{orderDateStr}-assignment.json",
+        ),
+        orient="records",
+    )
     # I need to investigate what is the purpose of the next loop
     # Because for now it uses trucks from the list of left-over trucks and not the ones that were assigned
     job_entries = []
-    truck_df_copy = truck_df.copy()
     port_lat = 38.42
     port_long = 27.14
-    for order in order_df.iterrows():
-        order_id = order[1]["OrderID"]
-        sup_id = order[1]["SupID"]
-        order_type = order[1]["Trailer_Type"]
+    job_id = 1
+    for index, order in order_df.iterrows():
+        order_id = order["OrderID"]
+        sup_id = order["SupID"]
+        order_type = order["Trailer_Type"]
 
-        origin_lat = order[1]["Arr. Lat"]
-        origin_long = order[1]["Arr. Lon"]
+        origin_lat = order["Arr. Lat"]
+        origin_long = order["Arr. Lon"]
+        ready_datetime_str = order["Ready_Date_and_Time"]
 
-        ready_datetime_str = order[1]["Ready_Date_and_Time"]
+        indexes = truck_df["TrailerType"] == order_type
+        truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
+        truck_locations = {
+            k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()
+        }
 
-        truck_locations = truck_df_copy[truck_df_copy["TrailerType"] == order_type].iloc[:, [3, 4]].to_dict(
-            orient="index")
-        truck_locations = {k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()}
+        speed_to_supplier = round(random.randint(10, 80), 2)
+        triptimes = {
+            k: haversine(origin_lat, origin_long, v[0], v[1])
+            / speed_to_supplier
+            for k, v in truck_locations.items()
+        }
+        triptimes = {
+            k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])
+        }
 
-        triptimes = {k: haversine(origin_lat, origin_long, v[0], v[1]) / round(random.randint(10, 80), 2) for k, v in truck_locations.items()}
-        triptimes = {k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])}
-
-        job_entry = None
+        job_entry = {}
         for k, v in triptimes.items():
-            truck_id = truck_df_copy.loc[k, "TruckID"]
-            truck_type = truck_df_copy.loc[k, "TrailerType"]
-            available_time_str = truck_df_copy.loc[k, "Available_Date_and_Time"]
-            available_time = datetime.strptime(available_time_str, '%Y-%m-%d %H:%M:%S')
+            truck_id = truck_df.loc[k, "TruckID"]
+            truck_type = truck_df.loc[k, "TrailerType"]
+            available_time_str = truck_df.loc[k, "Available_Date_and_Time"]
+            available_time = datetime.strptime(available_time_str, "%Y-%m-%d %H:%M:%S")
             tripstart_time = subtract_hours_from_datetime(ready_datetime_str, v)
-            ready_datetime = datetime.strptime(ready_datetime_str, '%Y-%m-%d %H:%M:%S')
+            ready_datetime = datetime.strptime(ready_datetime_str, "%Y-%m-%d %H:%M:%S")
             random_speed = round(random.randint(10, 80), 2)
 
             if tripstart_time >= available_time:
@@ -187,40 +236,87 @@ while orderDate <= endLoopDate:
 
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
+                ferry_date_time = next_sunday(port_arrival)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
                 arrival_customer = arrival_tarragona + timedelta(hours=6)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
-                job_entry = [job_id, order_id, sup_id, order_type, truck_type, truck_id, truck_locations[k],
-                             (origin_lat, origin_long),
-                             round (v * random_speed,2), round(random_speed,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), round(dist_to_port,2), round(duration_to_port,2), random_speed, day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
-                             unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
+
+                job_entry = {
+                    "JobID": job_id,
+                    "OrderID": order_id,
+                    "SupID": sup_id,
+                    "RequestedTrailerType": order_type,
+                    "ProvidedTrailer Type": truck_type,
+                    "TruckID": truck_id,
+                    "TruckLocation": truck_locations[k],
+                    "SupplierLocation": (origin_lat, origin_long),
+                    "DistanceToSupplier": round(v * random_speed, 2),
+                    "SpeedToSupplier(km/h)": speed_to_supplier,
+                    "JobDatetime": tripstart_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "DurationToSupplier(h)": round(trip_duration, 2),
+                    "OrderDate": orderDateStr,
+                    "ReadyDatetime": ready_datetime_str,
+                    "TakeoffDatetime": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                    "PortArrivalDatetime": port_arrival.strftime("%Y-%m-%d %H:%M:%S"),
+                    "DistanceToPort(km)": round(dist_to_port, 2),
+                    "DurationToPort(h)": round(duration_to_port, 2),
+                    "Speed(km/h)": random_speed,
+                    "DayName": day_name,
+                    "FerryDateTime": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "ArrivalTarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
+                    "ArrivalCustomer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
+                    "UnloadingCompleteTime": unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Status": status,
+                }
 
                 job_entries.append(job_entry)
-
                 job_id += 1
-                truck_df_copy = truck_df_copy[truck_df_copy["TruckID"] != truck_id]
+                truck_df = truck_df.drop(k)
                 break
 
         if not job_entry:
-            job_entry = [job_id, order_id, sup_id, order_type, "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN",
-                         "NaN", "NaN", "NaN", "NaN", "NaN", "NaN", "NaN"]
+            job_entry = {
+                "JobID": job_id,
+                "OrderID": order_id,
+                "SupID": sup_id,
+                "RequestedTrailerType": order_type,
+                "ProvidedTrailer Type": "NaN",
+                "TruckID": "NaN",
+                "TruckLocation": "NaN",
+                "SupplierLocation": "NaN",
+                "DistanceToSupplier": "NaN",
+                "SpeedToSupplier(km/h)": "NaN",
+                "JobDatetime": "NaN",
+                "DurationToSupplier(h)": "NaN",
+                "OrderDate": "NaN",
+                "ReadyDatetime": "NaN",
+                "TakeoffDatetime": "NaN",
+                "PortArrivalDatetime": "NaN",
+                "DistanceToPort(km)": "NaN",
+                "DurationToPort(h)": "NaN",
+                "Speed(km/h)": "NaN",
+                "DayName": "NaN",
+                "FerryDateTime": "NaN",
+                "ArrivalTarragona": "NaN",
+                "ArrivalCustomer": "NaN",
+                "UnloadingCompleteTime": "NaN",
+                "Status": "NaN",
+            }
             job_entries.append(job_entry)
             job_id += 1
+    checkout_df = pd.DataFrame(job_entries)
 
-
-    checkout_df = pd.DataFrame(job_entries,
-                               columns=["JobID", "OrderID", "SupID", "RequestedTrailerType", "ProvidedTrailer Type", "TruckID", "TruckLocation",
-                                        "SupplierLocation",
-                                        "DistanceToSupplier", "SpeedToSupplier(km/h)", "JobDatetime", "DurationToSupplier(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
-                                        "PortArrivalDatetime", "DistanceToPort(km)", "DurationToPort(h)", "Speed(km/h)", "DayName", "FerryDateTime", "ArrivalTarragona",
-                                        "ArrivalCustomer", "UnloadingCompleteTime", "Status"])
-
-    checkout_df.to_json(os.path.join(get_transaction_dbs_lstm_dir(), f'TransactionDatabase_lstm-{orderDateStr}.json'), orient='records')
+    checkout_df.to_json(
+        os.path.join(
+            get_transaction_dbs_lstm_dir(),
+            f"TransactionDatabase_lstm-{orderDateStr}.json",
+        ),
+        orient="records",
+    )
     orderDate = orderDate + timedelta(days=1)
 
-    pd.set_option('display.max_columns', None)
+    pd.set_option("display.max_columns", None)
 
     try:
         # Attempt to get the terminal width
@@ -230,5 +326,4 @@ while orderDate <= endLoopDate:
         terminal_width = 160  # Set a default width suitable for your screen
 
     # Set the display width
-    pd.set_option('display.width', terminal_width)
-
+    pd.set_option("display.width", terminal_width)
