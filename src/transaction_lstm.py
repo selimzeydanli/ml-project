@@ -151,6 +151,17 @@ while orderDate <= endLoopDate:
         ready_datetime = order["Ready_Date_and_Time"]
 
         indexes = truck_df_assignment["TrailerType"] == order_type
+        #truck information
+    #     {
+    #     "TruckID": 3431,                                  #0
+    #     "TrailerID": 3431,                                #1
+    #     "TrailerType": "hanger",                          #2
+    #     "Dep. Lat": 37.0,                                 #3
+    #     "Dep. Lon": 27.78,                                #4
+    #     "Available_Date_and_Time": "2023-01-04 08:00:00"  #5
+    #           },
+
+        # here we get "Dep. Lat" and "Dep. Lon" from all the trucks that can make it to the supplier
         truck_locations = truck_df_assignment[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {
             k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()
@@ -162,6 +173,7 @@ while orderDate <= endLoopDate:
 
         if closest_truck_id is not None:
             trip_duration = distance / round(random.randint(10, 80), 2)
+            # ready_datetime = Monday 3PM
             job_starttime = str(subtract_hours_from_datetime(ready_datetime, trip_duration))
 
             job_entry = {
@@ -206,14 +218,12 @@ while orderDate <= endLoopDate:
         indexes = truck_df["TrailerType"] == order_type
         truck_locations = truck_df[indexes].iloc[:, [3, 4]].to_dict(orient="index")
         truck_locations = {
-            k: (v["Dep. Lat"], v["Dep. Lon"]) for k, v in truck_locations.items()
+            k: (v["Dep. Lat"], v["Dep. Lon"],round(random.randint(10, 80), 2)) for k, v in truck_locations.items()
         }
 
-        speed_to_supplier = round(random.randint(10, 80), 2)
         triptimes = {
-            k: haversine(origin_lat, origin_long, v[0], v[1])
-            / speed_to_supplier
-            for k, v in truck_locations.items()
+            k: haversine(origin_lat, origin_long, truck_position_and_speed[0], truck_position_and_speed[1]) / truck_position_and_speed[2]
+            for k, truck_position_and_speed in truck_locations.items()
         }
         triptimes = {
             k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1])
