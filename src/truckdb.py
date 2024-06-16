@@ -4,6 +4,8 @@ import pandas as pd
 from datetime import date, timedelta
 import os
 
+import pending
+
 from src.utils import get_truck_dbs_dir, empty_folder
 
 empty_folder(get_truck_dbs_dir())
@@ -52,8 +54,8 @@ def generate_trucks(last_id, trucks, trucks_count, available_day, pending):
         trucks.append({'TruckID': last_id,
                        'TrailerID': last_id,
                        'TrailerType': ['box', 'hanger'][i % 2],
-                       'Dep. Lat': location['latitude'],
-                       'Dep. Lon': location['longitude'],
+                       'Dep. Lat': round(location['latitude'],2),
+                       'Dep. Lon': round(location['longitude'],2),
                        'Available_Date_and_Time': available_date_and_time})
         coordinates.append(location)
         last_id += 1
@@ -62,7 +64,7 @@ def generate_trucks(last_id, trucks, trucks_count, available_day, pending):
 
 def get_random_location(pending=False):
     if pending:
-        return random.uniform(32.49, 32.50), random.uniform(39.45, 39.50)
+        return random.uniform(38.30, 38.35), random.uniform(26.30, 26.35)
     return random.uniform(37.2, 39.5), random.uniform(26, 45)
 
 

@@ -65,7 +65,7 @@ def generate_trucks(last_id, trucks, trucks_count, available_day, pending):
 def get_random_location(pending=False):
     if pending:
         return random.uniform(38.30, 38.35), random.uniform(26.30, 26.35)
-    return random.uniform(37.2, 39.5), random.uniform(26, 45)
+    return random.uniform(36, 41), random.uniform(26, 49)
 
 
 def get_random_coordinates(pending=False):

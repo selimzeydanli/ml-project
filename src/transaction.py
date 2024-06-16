@@ -53,9 +53,30 @@ def get_day_name(date):
 
 
 # Function to calculate the next Sunday from a given date
+#def next_sunday(date):
+    #days_until_sunday = (6 - date.weekday()) % 7
+    #return date + timedelta(days=days_until_sunday)
+
+from datetime import datetime, timedelta
+
+# Function to find the next Sunday from a given date
 def next_sunday(date):
-    days_until_sunday = (6 - date.weekday()) % 7
-    return date + timedelta(days=days_until_sunday)
+    days_until_sunday = (6 - date.weekday() + 7) % 7  # Calculate days until next Sunday
+    next_sunday_date = date + timedelta(days=days_until_sunday)  # Add days to get to next Sunday
+    return next_sunday_date
+
+# Function to set the time to 23:30
+def set_time(date):
+    return date.replace(hour=23, minute=30)
+
+# Assuming port_arrival is your initial date/time
+port_arrival = datetime.now()  # Example date/time, replace it with your actual value
+
+# Calculate the next Sunday
+next_sunday_date = next_sunday(port_arrival)
+
+# Set the time to 23:30
+ferry_date_time = set_time(next_sunday_date)
 
 def subtract_hours_from_datetime(input_datetime:str, hours_to_subtract:float):
     # Convert input_datetime to datetime object if it's not already
@@ -128,7 +149,7 @@ endLoopDate = datetime(2023, 12, 25)
 job_id = 1
 
 
-def plot_truck(truck_id, dateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, inditexLocation):
+def plot_truck(truck_id, dateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, customerLocation):
     # Handles for legend entries
     handles = []
     # Create a plot with a geo-projection
@@ -147,10 +168,10 @@ def plot_truck(truck_id, dateStr, truckLocation, supplierLocation, portLocation,
     plot_truck_move(ax, handles, portLocation, supplierLocation, port_name, 'red', sup_name, 'blue')
     tarragona_name = 'Tarragona'
     plot_truck_move(ax, handles, tarragonaLocation, portLocation, tarragona_name, 'blue', 'Port', 'orange')
-    inditex_name = 'Inditex'
-    plot_truck_move(ax, handles, inditexLocation, tarragonaLocation, inditex_name, 'orange', tarragona_name, 'green')
+    customer_name = 'Customer'
+    plot_truck_move(ax, handles, customerLocation, tarragonaLocation, customer_name, 'orange', tarragona_name, 'green')
 
-    ax.legend(handles, [truck_name, sup_name, port_name, tarragona_name, inditex_name])
+    ax.legend(handles, [truck_name, sup_name, port_name, tarragona_name, customer_name])
 
     if not os.path.exists(os.path.join(get_truck_plotting_dir(), dateStr)):
         os.makedirs(os.path.join(get_truck_plotting_dir(), dateStr))
@@ -262,13 +283,13 @@ while orderDate <= endLoopDate:
                 day_name = get_day_name(port_arrival)
                 ferry_date_time = next_sunday(port_arrival)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
-                arrival_inditex = arrival_tarragona + timedelta(hours=6)
-                unloading_complete_time = arrival_inditex + timedelta(hours=6)
+                arrival_customer = arrival_tarragona + timedelta(hours=6)
+                unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
                 job_entry = [job_id, order_id, sup_id, order_type, truck_id, truck_locations[k],
                              (origin_lat, origin_long),
                              round(v*50,2), tripstart_time.strftime("%Y-%m-%d %H:%M:%S"), round (v,2), orderDateStr, ready_datetime_str, (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_inditex.strftime("%Y-%m-%d %H:%M:%S"),
+                             port_arrival.strftime("%Y-%m-%d %H:%M:%S"), day_name, ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"), arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"), arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                              unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"), status]
 
                 job_entries.append(job_entry)
@@ -288,7 +309,7 @@ while orderDate <= endLoopDate:
                                         "SupplierLocation",
                                         "Distance", "JobDatetime", "JobDuration(h)", "OrderDate", "ReadyDatetime", "TakeoffDatetime",
                                         "PortArrivalDatetime", "DayName", "FerryDateTime", "ArrivalTarragona",
-                                        "ArrivalInditex", "UnloadingCompleteTime", "Status"])
+                                        "ArrivalCustomer", "UnloadingCompleteTime", "Status"])
 
     checkout_df.to_json(os.path.join(get_transaction_dbs_dir(), f'TransactionDatabase-{orderDateStr}.json'), orient='records')
     plot_coordinates(checkout_df["TruckLocation"], checkout_df["SupplierLocation"], os.path.join(get_plotting_dir(), f'Plotting-{orderDateStr}'))
@@ -308,12 +329,12 @@ while orderDate <= endLoopDate:
 
     # Set the display width
     pd.set_option('display.width', terminal_width)
-    print (checkout_df)
+
     for row in checkout_df.values:
         # plot truck
         truckLocation = row[5]
         supplierLocation = row[6]
         portLocation = (port_lat, port_long)
         tarragonaLocation = (41.1, 1.25)
-        inditexLocation = (41.6, -0.89)
-        plot_truck(row[4], orderDateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, inditexLocation)
+        customerLocation = (42.6, -2.22)
+        plot_truck(row[4], orderDateStr, truckLocation, supplierLocation, portLocation, tarragonaLocation, customerLocation)
