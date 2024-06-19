@@ -1,97 +1,113 @@
+import json
 import os
-import torch
-import numpy as np
 import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error, r2_score
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
-from torch import nn, optim
-from torch.utils.data import DataLoader
-from torchvision import transforms, datasets
+# Define the path to your JSON files on your PC
+path_to_json = r'C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm'
 
-batchsize = 100
-training_data = datasets.FashionMNIST(root="../fashion_mnist", train = True, transform = transforms.ToTensor(), download=True)
-test_data = datasets.FashionMNIST(root="../fashion_mnist", train = False, transform = transforms.ToTensor(), download=True)
+# Load all JSON files in the directory
+data = []
+for file_name in os.listdir(path_to_json):
+    if file_name.endswith('.json'):
+        file_path = os.path.join(path_to_json, file_name)
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read().strip()
+                if content:  # Check if the file is not empty
+                    data.append(json.loads(content))
+                else:
+                    print(f"Warning: {file_name} is empty and will be skipped.")
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from file {file_name}: {e}")
+        except Exception as e:
+            print(f"Error reading file {file_name}: {e}")
 
-train_dataloader = DataLoader (training_data, batch_size = batchsize)
-test_dataloader = DataLoader (test_data, batch_size = batchsize)
+# Assuming each JSON file contains a list of dictionaries
+data = [item for sublist in data for item in sublist]
 
-# define hyperparameters
-sequence_len = 28
-input_len = 28
-hidden_size = 128
-num_layers = 2
-num_classes = 10
-num_epochs = 5
-learning_rate = 0.01
+# Convert the data to a DataFrame
+df = pd.DataFrame(data)
 
-class LSTM(nn.Module):
-    def __init__(self, input_len, hidden_size, num_class, num_layers):
-        super (LSTM, self). __init__()
-        self.hidden_size  = hidden_size
-        self.num_layers = num_layers
-        self.lstm = nn. LSTM(input_len, hidden_size, num_layers, batch_first = True)
-        self.output_layer = nn.Linear(hidden_size, num_classes)
+# Check if DataFrame is empty
+if df.empty:
+    raise ValueError("The DataFrame is empty. Ensure your JSON files contain data.")
 
-    def forward(self, X):
-        hidden_states = torch.zeros(self.num_layers, X.size(0), self.hidden_size)
-        cell_states = torch.zeros(self.num_layers, X.size(0), self.hidden_size)
-        out, _ = self.lstm(X, (hidden_states, cell_states))
-        out = self.output_layer(out[:, -1, :])
-        return out
+# Print the DataFrame structure and columns
+print("DataFrame structure:")
+print(df.head())
+print("\nDataFrame columns:")
+print(df.columns)
 
-model = LSTM(input_len, hidden_size, num_classes, num_layers)
-print(model)
+# Display column names for debugging
+print("Columns in the DataFrame:")
+for col in df.columns:
+    print(f"'{col}'")
 
-loss_func = nn.CrossEntropyLoss()
-optimizer = optim.SGD (model.parameters(), lr=learning_rate)
+# Update the column names based on the actual DataFrame columns
+required_columns = ['Distance_To_Supplier(km)', 'Speed_To_Supplier(km/h)']
 
-def train(num_epochs, model, train_dataloader, loss_func):
-    total_steps = len (train_dataloader)
+# Check if required columns are present
+missing_columns = [col for col in required_columns if col not in df.columns]
+if missing_columns:
+    raise KeyError(f"Missing columns in the DataFrame: {missing_columns}")
 
-    for epoch in range(num_epochs):
-        for batch, (images, labels) in enumerate(train_dataloader):
-            images = images.reshape (-1, sequence_len, input_len)
+# Correctly identify the target variable column
+target_column = 'Duration_To_Supplier(h)'
+if target_column not in df.columns:
+    raise KeyError(f"The target column '{target_column}' is not in the DataFrame. Please check the JSON files for the correct column name.")
 
-            output = model(images)
-            loss = loss_func(output, labels)
+# Select relevant variables
+X = df[required_columns].values
+y = df[target_column].values
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+# Reshape X for LSTM [samples, time steps, features]
+X = X.reshape((X.shape[0], 1, X.shape[1]))
 
-            if (batch+1)%100 == 0:
-                print (f"Epoch: {epoch+1}; Batch {batch+1} / {total_steps}; Loss: {loss.item():>4f}")
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-train(num_epochs, model, train_dataloader, loss_func)
+# Scale the data
+scaler_X = MinMaxScaler()
+scaler_y = MinMaxScaler()
 
-test_images, test_labels = next(iter(test_dataloader))
-test_labels
+X_train = scaler_X.fit_transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
+X_test = scaler_X.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
 
-test_output = model(test_images.view(-1, 28, 28))
+y_train = scaler_y.fit_transform(y_train.reshape(-1, 1)).reshape(-1)
+y_test = scaler_y.transform(y_test.reshape(-1, 1)).reshape(-1)
 
-predicted = torch.max(test_output, 1)[1]
-predicted
+# Build the LSTM model
+model = Sequential()
+model.add(LSTM(50, activation='relu', input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mse')
 
-correct = [1 for i in range(100) if predicted[i] == test_labels[i]]
+# Train the model
+history = model.fit(X_train, y_train, epochs=200, batch_size=32, validation_split=0.2, verbose=1)
 
-percentage_correct = sum(correct)/100
-percentage_correct
+# Evaluate the model with MSE
+loss = model.evaluate(X_test, y_test, verbose=1)
+print(f'Model Loss (MSE): {loss}')
 
-def test_loop(dataloader, model, loss_fn, optimizer):
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss, correct = 0, 0
+# Make predictions
+y_pred = model.predict(X_test)
+y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
 
-    with torch.no_grad():
-        for X, y in dataloader:
-            #reshape images
-            X = X.reshape(-1, 28, 28)
-            pred = model (X)
-            test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+# Calculate MAE
+mae = mean_absolute_error(scaler_y.inverse_transform(y_test), y_pred)
+print(f'Mean Absolute Error (MAE): {mae}')
 
-    test_loss /= num_batches
-    correct/= size
-    print (f"Test Error:\n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f}\n")
-    return 100*correct
+# Calculate R-squared
+r2 = r2_score(scaler_y.inverse_transform(y_test), y_pred)
+print(f'R-squared (R2 Score): {r2}')
 
-test_loop(test_dataloader, model, loss_func, optimizer)
+# Print a few predictions
+print("\nPredictions vs Actuals:")
+for i in range(min(5, len(X_test))):
+    print(f'Predicted: {y_pred[i][0]:.2f}, Actual: {scaler_y.inverse_transform(y_test[i].reshape(1, -1))[0][0]:.2f}')
