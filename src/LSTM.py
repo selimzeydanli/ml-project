@@ -160,7 +160,7 @@ print(f'Predicted Speed To Supplier (km/h): {predicted_speed_supplier:.2f}')
 print(f'Predicted Duration To Supplier (h) for {month}/{day}: {predicted_duration_supplier[0][0]:.2f} hours')
 
 # Fixed port location
-port_lat = 3.43
+port_lat = 38.43
 port_lon = 27.14
 
 # Calculate the distance to port
