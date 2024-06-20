@@ -127,8 +127,11 @@ def train_model(required_columns, target_column):
 # Train the model for 'Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude' and 'Duration_To_Supplier(h)'
 model_supplier, scaler_X_supplier, scaler_y_supplier = train_model(['Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude'], 'Duration_To_Supplier(h)')
 
-# Function to preprocess data and train the model for port
-def train_model_port(required_columns, target_column):
+# Train the model for 'Distance_To_Port(km)' and 'Duration_To_Port(h)'
+model_port, scaler_X_port, scaler_y_port = train_model(['Distance_To_Port(km)'], 'Duration_To_Port(h)')
+
+# Function to train the model for 'Speed_To_Customer (km/h)'
+def train_speed_model(required_columns, target_column):
     # Check if required columns are present
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
@@ -189,8 +192,8 @@ def train_model_port(required_columns, target_column):
 
     return model, scaler_X, scaler_y
 
-# Train the model for 'Distance_To_Port(km)' and 'Duration_To_Port(h)'
-model_port, scaler_X_port, scaler_y_port = train_model_port(['Distance_To_Port(km)'], 'Duration_To_Port(h)')
+# Train the model for 'Speed_To_Customer (km/h)'
+model_customer_speed, scaler_X_customer, scaler_y_customer = train_speed_model(['Truck_Latitude', 'Truck_Longitude', 'Customer_Latitude', 'Customer_Longitude'], 'Speed_To_Customer(km/h)')
 
 # User input for departure and arrival latitudes and longitudes
 dep_lat = float(input("Enter the departure latitude: "))
@@ -254,3 +257,40 @@ predicted_speed_port = distance_to_port / predicted_duration_port[0][0]
 print(f'\nDistance To Port (km): {distance_to_port:.2f}')
 print(f'Predicted Speed To Port (km/h): {predicted_speed_port:.2f}')
 print(f'Predicted Duration To Port (h) for {month}/{day}: {predicted_duration_port[0][0]:.2f} hours')
+
+# Coordinates of Tarragona
+tarragona_lat = 41.11
+tarragona_lon = 1.24
+
+# Coordinates of the customer
+customer_lat = 42.28
+customer_lon = 2.45
+
+# Calculate the distance between Tarragona and the customer
+distance_to_customer = geodesic((tarragona_lat, tarragona_lon), (customer_lat, customer_lon)).kilometers
+
+# Create a new input array for custome28.1
+# 44.2
+# 37.2
+# 41.1
+# 9
+# 15
+# r speed prediction
+user_input_features_customer = np.array([[dep_lat, dep_lon, arr_lat, arr_lon]])
+
+# Transform user_input_features using the fitted scaler_X
+user_input_features_scaled_customer = scaler_X_customer.transform(user_input_features_customer)
+
+# Reshape user_input_features_scaled for LSTM input
+user_input_features_scaled_customer = user_input_features_scaled_customer.reshape((1, 1, 4))
+
+# Predict speed to customer
+predicted_speed_scaled_customer = model_customer_speed.predict(user_input_features_scaled_customer)
+predicted_speed_customer = scaler_y_customer.inverse_transform(predicted_speed_scaled_customer.reshape(-1, 1))
+
+# Calculate predicted duration to customer
+predicted_duration_customer = distance_to_customer / predicted_speed_customer[0][0]
+
+print(f'\nDistance To Customer (km): {distance_to_customer:.2f}')
+print(f'Predicted Speed To Customer (km/h): {predicted_speed_customer[0][0]:.2f}')
+print(f'Predicted Duration To Customer (h) for {month}/{day}: {predicted_duration_customer:.2f} hours')
