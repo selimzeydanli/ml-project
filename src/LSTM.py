@@ -52,7 +52,7 @@ for col in df.columns:
     print(f"'{col}'")
 
 # Update the column names based on the actual DataFrame columns
-required_columns = ['Distance_To_Supplier(km)', 'Speed_To_Supplier(km/h)']
+required_columns = ['Distance_To_Supplier(km)']
 
 # Check if required columns are present
 missing_columns = [col for col in required_columns if col not in df.columns]
@@ -78,11 +78,19 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 scaler_X = MinMaxScaler()
 scaler_y = MinMaxScaler()
 
-X_train = scaler_X.fit_transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
+# Fit scaler_X based on X_train
+scaler_X.fit(X_train.reshape(-1, X_train.shape[-1]))
+
+# Transform X_train and X_test with the fitted scaler
+X_train = scaler_X.transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
 X_test = scaler_X.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
 
 y_train = scaler_y.fit_transform(y_train.reshape(-1, 1)).reshape(-1)
 y_test = scaler_y.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+# Debugging: Print scaled y_train and y_test
+print("Scaled y_train: ", y_train[:5])
+print("Scaled y_test: ", y_test[:5])
 
 # Build the LSTM model
 model = Sequential()
@@ -90,8 +98,8 @@ model.add(LSTM(50, activation='relu', input_shape=(X_train.shape[1], X_train.sha
 model.add(Dense(1))
 model.compile(optimizer='adam', loss='mse')
 
-# Train the model
-history = model.fit(X_train, y_train, epochs=3, batch_size=32, validation_split=0.2, verbose=1)
+# Train the model with 3 epochs
+history = model.fit(X_train, y_train, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
 
 # Evaluate the model with MSE
 loss = model.evaluate(X_test, y_test, verbose=1)
@@ -100,6 +108,9 @@ print(f'Model Loss (MSE): {loss}')
 # Make predictions
 y_pred = model.predict(X_test)
 y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
+
+# Debugging: Print y_pred
+print("Predicted y_pred: ", y_pred[:5])
 
 # Calculate MAE
 y_test_reshaped = y_test.reshape(-1, 1)  # Reshape y_test to 2D
@@ -132,16 +143,32 @@ day = int(input("Enter the day (1-31): "))
 # Calculate the distance
 distance_to_supplier = calculate_distance(dep_lat, dep_lon, arr_lat, arr_lon)
 
+# Assuming average speed (since speed is not available in user input, set a placeholder or calculate based on data)
+# You can calculate average speed from training data if needed
+average_speed = df['Speed_To_Supplier(km/h)'].mean()
+
 # Create a new input array based on user input
 user_input_date = datetime(2024, month, day)
 day_of_year = user_input_date.timetuple().tm_yday
-user_input_features = np.array([[distance_to_supplier, day_of_year]])
+user_input_features = np.array([[distance_to_supplier]])
 
-# Scale the user input features
-user_input_features_scaled = scaler_X.transform(user_input_features).reshape((1, 1, 2))
+# Transform user_input_features using the fitted scaler_X
+user_input_features_scaled = scaler_X.transform(user_input_features)
+
+# Reshape user_input_features_scaled for LSTM input
+user_input_features_scaled = user_input_features_scaled.reshape((1, 1, 1))
 
 # Predict duration to supplier
 predicted_duration_scaled = model.predict(user_input_features_scaled)
 predicted_duration = scaler_y.inverse_transform(predicted_duration_scaled.reshape(-1, 1))
 
+# Calculate predicted speed to supplier
+predicted_speed = distance_to_supplier / predicted_duration[0][0]
+
+# Debugging: Print scaled and unscaled user input features
+print("User input features (scaled): ", user_input_features_scaled)
+print("User input features (unscaled): ", user_input_features)
+
+print(f'\nDistance To Supplier (km): {distance_to_supplier:.2f}')
+print(f'Predicted Speed To Supplier (km/h): {predicted_speed:.2f}')
 print(f'Predicted Duration To Supplier (h) for {month}/{day}: {predicted_duration[0][0]:.2f} hours')
