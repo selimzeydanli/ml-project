@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, r2_score
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from datetime import datetime
 
 # Define the path to your JSON files on your PC
 path_to_json = r'C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm'
@@ -89,7 +90,7 @@ model.add(Dense(1))
 model.compile(optimizer='adam', loss='mse')
 
 # Train the model
-history = model.fit(X_train, y_train, epochs=200, batch_size=32, validation_split=0.2, verbose=1)
+history = model.fit(X_train, y_train, epochs=3, batch_size=32, validation_split=0.2, verbose=1)
 
 # Evaluate the model with MSE
 loss = model.evaluate(X_test, y_test, verbose=1)
@@ -100,14 +101,36 @@ y_pred = model.predict(X_test)
 y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
 
 # Calculate MAE
-mae = mean_absolute_error(scaler_y.inverse_transform(y_test), y_pred)
+y_test_reshaped = y_test.reshape(-1, 1)  # Reshape y_test to 2D
+mae = mean_absolute_error(scaler_y.inverse_transform(y_test_reshaped), y_pred)
 print(f'Mean Absolute Error (MAE): {mae}')
 
 # Calculate R-squared
-r2 = r2_score(scaler_y.inverse_transform(y_test), y_pred)
+r2 = r2_score(scaler_y.inverse_transform(y_test_reshaped), y_pred)
 print(f'R-squared (R2 Score): {r2}')
 
 # Print a few predictions
 print("\nPredictions vs Actuals:")
 for i in range(min(5, len(X_test))):
-    print(f'Predicted: {y_pred[i][0]:.2f}, Actual: {scaler_y.inverse_transform(y_test[i].reshape(1, -1))[0][0]:.2f}')
+    actual = scaler_y.inverse_transform(y_test_reshaped[i].reshape(1, -1))[0][0]
+    predicted = y_pred[i][0]
+    print(f'Predicted: {predicted:.2f}, Actual: {actual:.2f}')
+
+# User input for month, day, and distance to supplier
+month = int(input("Enter the month (1-12): "))
+day = int(input("Enter the day (1-31): "))
+distance_to_supplier = float(input("Enter the Distance To Supplier (km): "))
+
+# Create a new input array based on user input
+user_input_date = datetime(2024, month, day)
+day_of_year = user_input_date.timetuple().tm_yday
+user_input_features = np.array([[distance_to_supplier, day_of_year]])
+
+# Scale the user input features
+user_input_features_scaled = scaler_X.transform(user_input_features).reshape((1, 1, 2))
+
+# Predict duration to supplier
+predicted_duration_scaled = model.predict(user_input_features_scaled)
+predicted_duration = scaler_y.inverse_transform(predicted_duration_scaled.reshape(-1, 1))
+
+print(f'Predicted Duration To Supplier (h) for {month}/{day}: {predicted_duration[0][0]:.2f} hours')
