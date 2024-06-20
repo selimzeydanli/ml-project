@@ -8,6 +8,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from datetime import datetime
+from geopy.distance import geodesic
 
 # Define the path to your JSON files on your PC
 path_to_json = r'C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm'
@@ -116,10 +117,20 @@ for i in range(min(5, len(X_test))):
     predicted = y_pred[i][0]
     print(f'Predicted: {predicted:.2f}, Actual: {actual:.2f}')
 
-# User input for month, day, and distance to supplier
+# Function to calculate distance based on latitude and longitude
+def calculate_distance(lat1, lon1, lat2, lon2):
+    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
+
+# User input for departure and arrival latitudes and longitudes
+dep_lat = float(input("Enter the departure latitude: "))
+dep_lon = float(input("Enter the departure longitude: "))
+arr_lat = float(input("Enter the arrival latitude: "))
+arr_lon = float(input("Enter the arrival longitude: "))
 month = int(input("Enter the month (1-12): "))
 day = int(input("Enter the day (1-31): "))
-distance_to_supplier = float(input("Enter the Distance To Supplier (km): "))
+
+# Calculate the distance
+distance_to_supplier = calculate_distance(dep_lat, dep_lon, arr_lat, arr_lon)
 
 # Create a new input array based on user input
 user_input_date = datetime(2024, month, day)
