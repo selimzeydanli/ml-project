@@ -46,13 +46,89 @@ print(df.head())
 print("\nDataFrame columns:")
 print(df.columns)
 
+# Print columns and their data types
+print("\nColumns and their data types:")
+print(df.dtypes)
+
 # Display column names for debugging
 print("Columns in the DataFrame:")
 for col in df.columns:
     print(f"'{col}'")
 
+# Function to calculate distance based on latitude and longitude
+def calculate_distance(lat1, lon1, lat2, lon2):
+    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
+
 # Function to preprocess data and train the model
 def train_model(required_columns, target_column):
+    # Check if required columns are present
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise KeyError(f"Missing columns in the DataFrame: {missing_columns}")
+
+    if target_column not in df.columns:
+        raise KeyError(f"The target column '{target_column}' is not in the DataFrame. Please check the JSON files for the correct column name.")
+
+    # Calculate the distance for Truck_Location
+    df['Distance_To_Supplier(km)'] = df.apply(lambda row: calculate_distance(row['Truck_Latitude'], row['Truck_Longitude'], row['Supplier_Latitude'], row['Supplier_Longitude']), axis=1)
+
+    # Select relevant variables
+    X = df[['Distance_To_Supplier(km)']].values
+    y = df[target_column].values
+
+    # Reshape X for LSTM [samples, time steps, features]
+    X = X.reshape((X.shape[0], 1, X.shape[1]))
+
+    # Split the data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Scale the data
+    scaler_X = MinMaxScaler()
+    scaler_y = MinMaxScaler()
+
+    # Fit scaler_X based on X_train
+    scaler_X.fit(X_train.reshape(-1, X_train.shape[-1]))
+
+    # Transform X_train and X_test with the fitted scaler
+    X_train = scaler_X.transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
+    X_test = scaler_X.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
+
+    y_train = scaler_y.fit_transform(y_train.reshape(-1, 1)).reshape(-1)
+    y_test = scaler_y.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+    # Build the LSTM model
+    model = Sequential()
+    model.add(LSTM(50, activation='relu', input_shape=(X_train.shape[1], X_train.shape[2])))
+    model.add(Dense(1))
+    model.compile(optimizer='adam', loss='mse')
+
+    # Train the model with 1 epoch
+    model.fit(X_train, y_train, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
+
+    # Evaluate the model with MSE
+    loss = model.evaluate(X_test, y_test, verbose=1)
+    print(f'Model Loss (MSE): {loss}')
+
+    # Make predictions
+    y_pred = model.predict(X_test)
+    y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
+
+    # Calculate MAE
+    y_test_reshaped = y_test.reshape(-1, 1)  # Reshape y_test to 2D
+    mae = mean_absolute_error(scaler_y.inverse_transform(y_test_reshaped), y_pred)
+    print(f'Mean Absolute Error (MAE): {mae}')
+
+    # Calculate R-squared
+    r2 = r2_score(scaler_y.inverse_transform(y_test_reshaped), y_pred)
+    print(f'R-squared (R2 Score): {r2}')
+
+    return model, scaler_X, scaler_y
+
+# Train the model for 'Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude' and 'Duration_To_Supplier(h)'
+model_supplier, scaler_X_supplier, scaler_y_supplier = train_model(['Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude'], 'Duration_To_Supplier(h)')
+
+# Function to preprocess data and train the model for port
+def train_model_port(required_columns, target_column):
     # Check if required columns are present
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
@@ -113,15 +189,8 @@ def train_model(required_columns, target_column):
 
     return model, scaler_X, scaler_y
 
-# Train the model for 'Distance_To_Supplier(km)' and 'Duration_To_Supplier(h)'
-model_supplier, scaler_X_supplier, scaler_y_supplier = train_model(['Distance_To_Supplier(km)'], 'Duration_To_Supplier(h)')
-
 # Train the model for 'Distance_To_Port(km)' and 'Duration_To_Port(h)'
-model_port, scaler_X_port, scaler_y_port = train_model(['Distance_To_Port(km)'], 'Duration_To_Port(h)')
-
-# Function to calculate distance based on latitude and longitude
-def calculate_distance(lat1, lon1, lat2, lon2):
-    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
+model_port, scaler_X_port, scaler_y_port = train_model_port(['Distance_To_Port(km)'], 'Duration_To_Port(h)')
 
 # User input for departure and arrival latitudes and longitudes
 dep_lat = float(input("Enter the departure latitude: "))
