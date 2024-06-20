@@ -30,7 +30,6 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float):
     distance = 6371 * c  # Radius of the Earth in kilometers
     return distance
 
-
 def find_closest(origin_lat: float, origin_lon: float, points: dict):
     # dict: {id:(lat,long)}
     min_distance = float("inf")
@@ -57,14 +56,7 @@ def get_day_name(date):
     """
     return date.strftime("%A")
 
-
-# Function to calculate the next Sunday from a given date
-# def next_sunday(date):
-# days_until_sunday = (6 - date.weekday()) % 7
-# return date + timedelta(days=days_until_sunday)
-
 from datetime import datetime, timedelta
-
 
 # Function to find the next Sunday from a given date
 def next_sunday(date):
@@ -74,11 +66,9 @@ def next_sunday(date):
     )  # Add days to get to next Sunday
     return next_sunday_date
 
-
 # Function to set the time to 23:30
 def set_time(date):
     return date.replace(hour=23, minute=30, second=0)
-
 
 # Assuming port_arrival is your initial date/time
 port_arrival = datetime.now()  # Example date/time, replace it with your actual value
@@ -88,7 +78,6 @@ next_sunday_date = next_sunday(port_arrival)
 
 # Set the time to 23:30
 ferry_date_time = set_time(next_sunday_date)
-
 
 def subtract_hours_from_datetime(input_datetime: str, hours_to_subtract: float):
     # Convert input_datetime to datetime object if it's not already
@@ -103,9 +92,7 @@ def subtract_hours_from_datetime(input_datetime: str, hours_to_subtract: float):
 
     return result_datetime
 
-
 import cartopy.crs as ccrs
-
 
 orderDate = datetime(2023, 1, 3)
 
@@ -137,7 +124,6 @@ while orderDate <= endLoopDate:
         )
     )
     truck_df = pd.concat([truck_1_df, truck_2_df]).reset_index(drop=True)
-
 
     # I am searching for the closest truck but each truck has a random speed which simulates different road conditions
     job_entries = []
@@ -203,32 +189,36 @@ while orderDate <= endLoopDate:
                 status = "Free"
 
                 job_entry = {
-                    "JobID": job_id,
-                    "OrderID": order_id,
-                    "SupID": sup_id,
-                    "Trailer Type": truck_type,
-                    "TruckID": truck_id,
-                    "TruckLocation": (truck_locations[k]["Departure_Latitude"],truck_locations[k]["Departure_Longitude"]),
-                    "SupplierLocation": (supplier_latitude, supplier_longitude),
-                    "DistanceToSupplier": round(truck_trip_information["Distance_to_supplier"], 2),
-                    "SpeedToSupplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
-                    "JobDatetime": tripstart_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "DurationToSupplier(h)": round(truck_trip_information["Duration_to_supplier (h)"], 2),
-                    "OrderDate": orderDateStr,
-                    "ReadyDatetime": ready_datetime_str,
-                    "TakeoffDatetime": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
-                    "PortArrivalDatetime": port_arrival.strftime("%Y-%m-%d %H:%M:%S"),
-                    "DistanceToPort(km)": round(dist_to_port, 2),
-                    "DurationToPort(h)": round(duration_to_port, 2),
-                    "Speed(km/h)": random_speed,
-                    "DayName": day_name,
-                    "FerryDateTime": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "ArrivalTarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
-                    "DistanceToCustomer(km)": "300",
-                    "SpeedToCustomer": speed_to_customer,
-                    "DurationToCustomer(h)": time_to_customer,
-                    "ArrivalCustomer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
-                    "UnloadingCompleteTime": unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Job_ID": job_id,
+                    "Order_ID": order_id,
+                    "Order_Date": orderDateStr,
+                    "Ready_Date_Time": ready_datetime_str,
+                    "Job_Date_time": tripstart_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Sup_ID": sup_id,
+                    "Trailer_Type": truck_type,
+                    "Truck_ID": truck_id,
+                    "Truck_Latitude": (truck_locations[k]["Departure_Latitude"]),
+                    "Truck_Longitude": (truck_locations[k]["Departure_Longitude"]),
+                    "Supplier_Latitude": (supplier_latitude),
+                    "Supplier_Longitude": (supplier_longitude),
+                    "Distance_To_Supplier(km)": round(truck_trip_information["Distance_to_supplier"], 2),
+                    "Speed_To_Supplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
+                    "Duration_To_Supplier(h)": round(truck_trip_information["Duration_to_supplier (h)"], 2),
+                    "Take_off_Date_Time": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                    "Port_Arrival_Date_Time": port_arrival.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Distance_To_Port(km)": round(dist_to_port, 2),
+                    "Speed_To_Port(km/h)": random_speed,
+                    "Duration_To_Port(h)": round(duration_to_port, 2),
+                    "Day_Name": day_name,
+                    "Ferry_Date_Time": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Arrival_At_Tarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Customer_Latitude": "42.28",
+                    "Customer_Longitude": "2.45",
+                    "Distance_To_Customer(km)": "300",
+                    "Speed_To_Customer(km/h)": speed_to_customer,
+                    "Duration_To_Customer(h)": time_to_customer,
+                    "Arrival_At_Customer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Unloading_Complete_Date_Time": unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "Status": status,
                 }
 
@@ -239,32 +229,34 @@ while orderDate <= endLoopDate:
 
         if not job_entry:
             job_entry = {
-                "JobID": job_id,
-                "OrderID": order_id,
-                "SupID": sup_id,
-                "Trailer Type": "NaN",
-                "TruckID": "NaN",
-                "TruckLocation": "NaN",
-                "SupplierLocation": "NaN",
-                "DistanceToSupplier": "NaN",
-                "SpeedToSupplier(km/h)": "NaN",
-                "JobDatetime": "NaN",
-                "DurationToSupplier(h)": "NaN",
-                "OrderDate": "NaN",
-                "ReadyDatetime": "NaN",
-                "TakeoffDatetime": "NaN",
-                "PortArrivalDatetime": "NaN",
-                "DistanceToPort(km)": "NaN",
-                "DurationToPort(h)": "NaN",
+                "Job_ID": job_id,
+                "Order_ID": order_id,
+                "Order_Date": "NaN",
+                "Ready_Date_Time": "NaN",
+                "Job_Date_Time": "NaN",
+                "Sup_ID": sup_id,
+                "Trailer_Type": "NaN",
+                "Truck_ID": "NaN",
+                "Truck_Location": "NaN",
+                "Supplier_Location": "NaN",
+                "Distance_To_Supplier(km)": "NaN",
+                "Speed_To_Supplier(km/h)": "NaN",
+                "Duration_To_Supplier(h)": "NaN",
+                "Take_off_Date_Time": "NaN",
+                "Port_Arrival_Date_Time": "NaN",
+                "Distance_To_Port(km)": "NaN",
+                "Duration_To_Port(h)": "NaN",
                 "Speed(km/h)": "NaN",
-                "DayName": "NaN",
-                "FerryDateTime": "NaN",
-                "ArrivalTarragona": "NaN",
-                "DistanceToCustomer(km)": "NaN",
-                "SpeedToCustomer": "NaN",
-                "DurationToCustomer(h)": "NaN",
-                "ArrivalCustomer": "NaN",
-                "UnloadingCompleteTime": "NaN",
+                "Day_Name": "NaN",
+                "Ferry_Date_Time": "NaN",
+                "Arrival_At_Tarragona": "NaN",
+                "Customer_Latitude": "NaN",
+                "Customer_Longitude": "NaN",
+                "Distance_To_Customer(km)": "NaN",
+                "Speed_To_Customer(km/h)": "NaN",
+                "Duration_To_Customer(h)": "NaN",
+                "Arrival_At_Customer": "NaN",
+                "Unloading_Complete_Date_Time": "NaN",
                 "Status": "NaN",
             }
             job_entries.append(job_entry)
