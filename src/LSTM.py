@@ -17,20 +17,20 @@ scenarios = [
     {
         "name": "Supplier",
         "features": ["Truck_Latitude", "Truck_Longitude", "Supplier_Latitude", "Supplier_Longitude",
-                     "Speed_To_Supplier(km/h)"],
-        "target": "Speed_To_Supplier(km/h)"
+                     "Duration_To_Supplier(h)"],
+        "target": "Duration_To_Supplier(h)"
     },
     {
         "name": "Port",
         "features": ["Supplier_Latitude", "Supplier_Longitude", "Port_Latitude", "Port_Longitude",
-                     "Speed_To_Port(km/h)"],
-        "target": "Speed_To_Port(km/h)"
+                     "Duration_To_Port(h)"],
+        "target": "Duration_To_Port(h)"
     },
     {
         "name": "Customer",
         "features": ["Tarragona_Latitude", "Tarragona_Longitude", "Customer_Latitude", "Customer_Longitude",
-                     "Speed_To_Customer(km/h)"],
-        "target": "Speed_To_Customer(km/h)"
+                     "Duration_To_Customer(h)"],
+        "target": "Duration_To_Customer(h)"
     }
 ]
 
