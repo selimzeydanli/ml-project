@@ -162,7 +162,8 @@ while orderDate <= endLoopDate:
         triptimes = {
             k: v for k, v in sorted(triptimes.items(), key=lambda item: item[1]["Duration_to_supplier (h)"])
         }
-
+        lat_Tar, lon_Tar = 41.11, 1.25
+        lat_Cus, lon_Cus = 42.25, 1.25
         job_entry = {}
         for k, truck_trip_information in triptimes.items():
             truck_id = truck_df.loc[k, "TruckID"]
@@ -183,7 +184,8 @@ while orderDate <= endLoopDate:
                 ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
                 speed_to_customer = round(random.randint(10, 80), 2)
-                time_to_customer = round(300 / speed_to_customer,2)
+                distance_to_customer = haversine(lat_Tar, lon_Tar, lat_Cus, lon_Cus)
+                time_to_customer = round(distance_to_customer / speed_to_customer,2)
                 arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
                 unloading_complete_time = arrival_customer + timedelta(hours=6)
                 status = "Free"
@@ -205,6 +207,8 @@ while orderDate <= endLoopDate:
                     "Speed_To_Supplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
                     "Duration_To_Supplier(h)": round(truck_trip_information["Duration_to_supplier (h)"], 2),
                     "Take_off_Date_Time": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                    "Port_Latitude": "38.42",
+                    "Port_Longitude": "27.14",
                     "Port_Arrival_Date_Time": port_arrival.strftime("%Y-%m-%d %H:%M:%S"),
                     "Distance_To_Port(km)": round(dist_to_port, 2),
                     "Speed_To_Port(km/h)": random_speed,
@@ -212,9 +216,11 @@ while orderDate <= endLoopDate:
                     "Day_Name": day_name,
                     "Ferry_Date_Time": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "Arrival_At_Tarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Tarragona_Latitude": "41.11",
+                    "Tarragona_Longitude": "1.25",
                     "Customer_Latitude": "42.28",
                     "Customer_Longitude": "2.45",
-                    "Distance_To_Customer(km)": "300",
+                    "Distance_To_Customer(km)": distance_to_customer,
                     "Speed_To_Customer(km/h)": speed_to_customer,
                     "Duration_To_Customer(h)": time_to_customer,
                     "Arrival_At_Customer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
@@ -243,6 +249,8 @@ while orderDate <= endLoopDate:
                 "Speed_To_Supplier(km/h)": "NaN",
                 "Duration_To_Supplier(h)": "NaN",
                 "Take_off_Date_Time": "NaN",
+                "Port_Latitude": "NaN",
+                "Port_Longitude": "NaN",
                 "Port_Arrival_Date_Time": "NaN",
                 "Distance_To_Port(km)": "NaN",
                 "Duration_To_Port(h)": "NaN",
@@ -250,6 +258,8 @@ while orderDate <= endLoopDate:
                 "Day_Name": "NaN",
                 "Ferry_Date_Time": "NaN",
                 "Arrival_At_Tarragona": "NaN",
+                "Tarragona_Latitude": "NaN",
+                "Tarragona_Longitude": "NaN",
                 "Customer_Latitude": "NaN",
                 "Customer_Longitude": "NaN",
                 "Distance_To_Customer(km)": "NaN",
