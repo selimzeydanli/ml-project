@@ -1,296 +1,124 @@
-import json
 import os
-import pandas as pd
+import json
 import numpy as np
-from sklearn.model_selection import train_test_split
+import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
-from datetime import datetime
-from geopy.distance import geodesic
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import r2_score, mean_absolute_error
 
-# Define the path to your JSON files on your PC
-path_to_json = r'C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm'
+# Set the directory path
+directory = r"C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm"
 
-# Load all JSON files in the directory
-data = []
-for file_name in os.listdir(path_to_json):
-    if file_name.endswith('.json'):
-        file_path = os.path.join(path_to_json, file_name)
-        try:
-            with open(file_path, 'r') as file:
-                content = file.read().strip()
-                if content:  # Check if the file is not empty
-                    data.append(json.loads(content))
-                else:
-                    print(f"Warning: {file_name} is empty and will be skipped.")
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON from file {file_name}: {e}")
-        except Exception as e:
-            print(f"Error reading file {file_name}: {e}")
+# Define the three prediction scenarios
+scenarios = [
+    {
+        "name": "Supplier",
+        "features": ["Truck_Latitude", "Truck_Longitude", "Supplier_Latitude", "Supplier_Longitude",
+                     "Speed_To_Supplier(km/h)"],
+        "target": "Speed_To_Supplier(km/h)"
+    },
+    {
+        "name": "Port",
+        "features": ["Supplier_Latitude", "Supplier_Longitude", "Port_Latitude", "Port_Longitude",
+                     "Speed_To_Port(km/h)"],
+        "target": "Speed_To_Port(km/h)"
+    },
+    {
+        "name": "Customer",
+        "features": ["Tarragona_Latitude", "Tarragona_Longitude", "Customer_Latitude", "Customer_Longitude",
+                     "Speed_To_Customer(km/h)"],
+        "target": "Speed_To_Customer(km/h)"
+    }
+]
 
-# Assuming each JSON file contains a list of dictionaries
-data = [item for sublist in data for item in sublist]
+def create_and_train_model(X, y):
+    # Normalize the features
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit_transform(X)
 
-# Convert the data to a DataFrame
-df = pd.DataFrame(data)
+    # Reshape input data for LSTM (samples, time steps, features)
+    X_reshaped = X_scaled.reshape((X_scaled.shape[0], 1, X_scaled.shape[1]))
 
-# Check if DataFrame is empty
-if df.empty:
-    raise ValueError("The DataFrame is empty. Ensure your JSON files contain data.")
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X_reshaped, y, test_size=0.2, random_state=42)
 
-# Print the DataFrame structure and columns
-print("DataFrame structure:")
-print(df.head())
-print("\nDataFrame columns:")
-print(df.columns)
+    # Define the LSTM model
+    model = Sequential([
+        LSTM(64, activation='relu', input_shape=(1, X_reshaped.shape[2])),
+        Dense(32, activation='relu'),
+        Dense(1)
+    ])
 
-# Print columns and their data types
-print("\nColumns and their data types:")
-print(df.dtypes)
+    # Compile the model
+    model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
 
-# Display column names for debugging
-print("Columns in the DataFrame:")
-for col in df.columns:
-    print(f"'{col}'")
+    # Train the model
+    history = model.fit(X_train, y_train, epochs=1, batch_size=32, validation_split=0.2, verbose=0)
 
-# Function to calculate distance based on latitude and longitude
-def calculate_distance(lat1, lon1, lat2, lon2):
-    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
-
-# Function to preprocess data and train the model
-def train_model(required_columns, target_column):
-    # Check if required columns are present
-    missing_columns = [col for col in required_columns if col not in df.columns]
-    if missing_columns:
-        raise KeyError(f"Missing columns in the DataFrame: {missing_columns}")
-
-    if target_column not in df.columns:
-        raise KeyError(f"The target column '{target_column}' is not in the DataFrame. Please check the JSON files for the correct column name.")
-
-    # Calculate the distance for Truck_Location
-    df['Distance_To_Supplier(km)'] = df.apply(lambda row: calculate_distance(row['Truck_Latitude'], row['Truck_Longitude'], row['Supplier_Latitude'], row['Supplier_Longitude']), axis=1)
-
-    # Select relevant variables
-    X = df[['Distance_To_Supplier(km)']].values
-    y = df[target_column].values
-
-    # Reshape X for LSTM [samples, time steps, features]
-    X = X.reshape((X.shape[0], 1, X.shape[1]))
-
-    # Split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Scale the data
-    scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-
-    # Fit scaler_X based on X_train
-    scaler_X.fit(X_train.reshape(-1, X_train.shape[-1]))
-
-    # Transform X_train and X_test with the fitted scaler
-    X_train = scaler_X.transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
-    X_test = scaler_X.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
-
-    y_train = scaler_y.fit_transform(y_train.reshape(-1, 1)).reshape(-1)
-    y_test = scaler_y.transform(y_test.reshape(-1, 1)).reshape(-1)
-
-    # Build the LSTM model
-    model = Sequential()
-    model.add(LSTM(50, activation='relu', input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mse')
-
-    # Train the model with 1 epoch
-    model.fit(X_train, y_train, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
-
-    # Evaluate the model with MSE
-    loss = model.evaluate(X_test, y_test, verbose=1)
-    print(f'Model Loss (MSE): {loss}')
+    # Evaluate the model
+    loss = model.evaluate(X_test, y_test, verbose=0)
 
     # Make predictions
-    y_pred = model.predict(X_test)
-    y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
+    predictions = model.predict(X_test)
 
-    # Calculate MAE
-    y_test_reshaped = y_test.reshape(-1, 1)  # Reshape y_test to 2D
-    mae = mean_absolute_error(scaler_y.inverse_transform(y_test_reshaped), y_pred)
-    print(f'Mean Absolute Error (MAE): {mae}')
+    # Calculate R2 and MAE
+    r2 = r2_score(y_test, predictions)
+    mae = mean_absolute_error(y_test, predictions)
 
-    # Calculate R-squared
-    r2 = r2_score(scaler_y.inverse_transform(y_test_reshaped), y_pred)
-    print(f'R-squared (R2 Score): {r2}')
+    return model, X_test, y_test, loss, predictions, r2, mae
 
-    return model, scaler_X, scaler_y
+# Initialize dictionaries to store data for each scenario
+scenario_data = {scenario["name"]: {"features": [], "target": []} for scenario in scenarios}
 
-# Train the model for 'Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude' and 'Duration_To_Supplier(h)'
-model_supplier, scaler_X_supplier, scaler_y_supplier = train_model(['Truck_Latitude', 'Truck_Longitude', 'Supplier_Latitude', 'Supplier_Longitude'], 'Duration_To_Supplier(h)')
+# Iterate through files in the directory
+json_files_found = False
+for filename in os.listdir(directory):
+    if filename.endswith(".json"):
+        json_files_found = True
+        file_path = os.path.join(directory, filename)
+        print(f"Processing file: {filename}")
 
-# Train the model for 'Distance_To_Port(km)' and 'Duration_To_Port(h)'
-model_port, scaler_X_port, scaler_y_port = train_model(['Distance_To_Port(km)'], 'Duration_To_Port(h)')
+        # Read the JSON file
+        with open(file_path, 'r') as file:
+            data = json.load(file)
 
-# Function to train the model for 'Speed_To_Customer (km/h)'
-def train_speed_model(required_columns, target_column):
-    # Check if required columns are present
-    missing_columns = [col for col in required_columns if col not in df.columns]
-    if missing_columns:
-        raise KeyError(f"Missing columns in the DataFrame: {missing_columns}")
+        # Convert to DataFrame
+        df = pd.DataFrame(data)
 
-    if target_column not in df.columns:
-        raise KeyError(f"The target column '{target_column}' is not in the DataFrame. Please check the JSON files for the correct column name.")
+        # Extract data for each scenario
+        for scenario in scenarios:
+            if all(col in df.columns for col in scenario["features"]):
+                scenario_data[scenario["name"]]["features"].append(df[scenario["features"]].values)
+                scenario_data[scenario["name"]]["target"].append(df[scenario["target"]].values)
+            else:
+                print(f"Warning: Missing columns for {scenario['name']} scenario in {filename}")
 
-    # Select relevant variables
-    X = df[required_columns].values
-    y = df[target_column].values
+if not json_files_found:
+    print("No JSON files found in the specified directory.")
+    exit()
 
-    # Reshape X for LSTM [samples, time steps, features]
-    X = X.reshape((X.shape[0], 1, X.shape[1]))
+# Train models and make predictions for each scenario
+for scenario in scenarios:
+    name = scenario["name"]
+    if scenario_data[name]["features"]:
+        X = np.concatenate(scenario_data[name]["features"])
+        y = np.concatenate(scenario_data[name]["target"])
 
-    # Split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        print(f"\nScenario: {name}")
+        print(f"Total samples: {len(X)}")
 
-    # Scale the data
-    scaler_X = MinMaxScaler()
-    scaler_y = MinMaxScaler()
+        model, X_test, y_test, loss, predictions, r2, mae = create_and_train_model(X, y)
 
-    # Fit scaler_X based on X_train
-    scaler_X.fit(X_train.reshape(-1, X_train.shape[-1]))
+        print(f"Test Loss: {loss}")
+        print(f"R-squared (R2): {r2}")
+        print(f"Mean Absolute Error (MAE): {mae}")
 
-    # Transform X_train and X_test with the fitted scaler
-    X_train = scaler_X.transform(X_train.reshape(-1, X_train.shape[-1])).reshape(X_train.shape)
-    X_test = scaler_X.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
-
-    y_train = scaler_y.fit_transform(y_train.reshape(-1, 1)).reshape(-1)
-    y_test = scaler_y.transform(y_test.reshape(-1, 1)).reshape(-1)
-
-    # Build the LSTM model
-    model = Sequential()
-    model.add(LSTM(50, activation='relu', input_shape=(X_train.shape[1], X_train.shape[2])))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mse')
-
-    # Train the model with 1 epoch
-    model.fit(X_train, y_train, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
-
-    # Evaluate the model with MSE
-    loss = model.evaluate(X_test, y_test, verbose=1)
-    print(f'Model Loss (MSE): {loss}')
-
-    # Make predictions
-    y_pred = model.predict(X_test)
-    y_pred = scaler_y.inverse_transform(y_pred.reshape(-1, 1))
-
-    # Calculate MAE
-    y_test_reshaped = y_test.reshape(-1, 1)  # Reshape y_test to 2D
-    mae = mean_absolute_error(scaler_y.inverse_transform(y_test_reshaped), y_pred)
-    print(f'Mean Absolute Error (MAE): {mae}')
-
-    # Calculate R-squared
-    r2 = r2_score(scaler_y.inverse_transform(y_test_reshaped), y_pred)
-    print(f'R-squared (R2 Score): {r2}')
-
-    return model, scaler_X, scaler_y
-
-# Train the model for 'Speed_To_Customer (km/h)'
-model_customer_speed, scaler_X_customer, scaler_y_customer = train_speed_model(['Truck_Latitude', 'Truck_Longitude', 'Customer_Latitude', 'Customer_Longitude'], 'Speed_To_Customer(km/h)')
-
-# User input for departure and arrival latitudes and longitudes
-dep_lat = float(input("Enter the departure latitude: "))
-dep_lon = float(input("Enter the departure longitude: "))
-arr_lat = float(input("Enter the arrival latitude: "))
-arr_lon = float(input("Enter the arrival longitude: "))
-month = int(input("Enter the month (1-12): "))
-day = int(input("Enter the day (1-31): "))
-
-# Calculate the distance to supplier
-distance_to_supplier = calculate_distance(dep_lat, dep_lon, arr_lat, arr_lon)
-
-# Create a new input array based on user input
-user_input_date = datetime(2024, month, day)
-user_input_features_supplier = np.array([[distance_to_supplier]])
-
-# Transform user_input_features using the fitted scaler_X
-user_input_features_scaled_supplier = scaler_X_supplier.transform(user_input_features_supplier)
-
-# Reshape user_input_features_scaled for LSTM input
-user_input_features_scaled_supplier = user_input_features_scaled_supplier.reshape((1, 1, 1))
-
-# Predict duration to supplier
-predicted_duration_scaled_supplier = model_supplier.predict(user_input_features_scaled_supplier)
-predicted_duration_supplier = scaler_y_supplier.inverse_transform(predicted_duration_scaled_supplier.reshape(-1, 1))
-
-# Calculate predicted speed to supplier
-predicted_speed_supplier = distance_to_supplier / predicted_duration_supplier[0][0]
-
-# Debugging: Print scaled and unscaled user input features
-print("User input features (scaled): ", user_input_features_scaled_supplier)
-print("User input features (unscaled): ", user_input_features_supplier)
-
-print(f'\nDistance To Supplier (km): {distance_to_supplier:.2f}')
-print(f'Predicted Speed To Supplier (km/h): {predicted_speed_supplier:.2f}')
-print(f'Predicted Duration To Supplier (h) for {month}/{day}: {predicted_duration_supplier[0][0]:.2f} hours')
-
-# Fixed port location
-port_lat = 38.43
-port_lon = 27.14
-
-# Calculate the distance to port
-distance_to_port = calculate_distance(port_lat, port_lon, arr_lat, arr_lon)
-
-# Create a new input array based on user input
-user_input_features_port = np.array([[distance_to_port]])
-
-# Transform user_input_features using the fitted scaler_X
-user_input_features_scaled_port = scaler_X_port.transform(user_input_features_port)
-
-# Reshape user_input_features_scaled for LSTM input
-user_input_features_scaled_port = user_input_features_scaled_port.reshape((1, 1, 1))
-
-# Predict duration to port
-predicted_duration_scaled_port = model_port.predict(user_input_features_scaled_port)
-predicted_duration_port = scaler_y_port.inverse_transform(predicted_duration_scaled_port.reshape(-1, 1))
-
-# Calculate predicted speed to port
-predicted_speed_port = distance_to_port / predicted_duration_port[0][0]
-
-print(f'\nDistance To Port (km): {distance_to_port:.2f}')
-print(f'Predicted Speed To Port (km/h): {predicted_speed_port:.2f}')
-print(f'Predicted Duration To Port (h) for {month}/{day}: {predicted_duration_port[0][0]:.2f} hours')
-
-# Coordinates of Tarragona
-tarragona_lat = 41.11
-tarragona_lon = 1.24
-
-# Coordinates of the customer
-customer_lat = 42.28
-customer_lon = 2.45
-
-# Calculate the distance between Tarragona and the customer
-distance_to_customer = geodesic((tarragona_lat, tarragona_lon), (customer_lat, customer_lon)).kilometers
-
-# Create a new input array for custome28.1
-# 44.2
-# 37.2
-# 41.1
-# 9
-# 15
-# r speed prediction
-user_input_features_customer = np.array([[dep_lat, dep_lon, arr_lat, arr_lon]])
-
-# Transform user_input_features using the fitted scaler_X
-user_input_features_scaled_customer = scaler_X_customer.transform(user_input_features_customer)
-
-# Reshape user_input_features_scaled for LSTM input
-user_input_features_scaled_customer = user_input_features_scaled_customer.reshape((1, 1, 4))
-
-# Predict speed to customer
-predicted_speed_scaled_customer = model_customer_speed.predict(user_input_features_scaled_customer)
-predicted_speed_customer = scaler_y_customer.inverse_transform(predicted_speed_scaled_customer.reshape(-1, 1))
-
-# Calculate predicted duration to customer
-predicted_duration_customer = distance_to_customer / predicted_speed_customer[0][0]
-
-print(f'\nDistance To Customer (km): {distance_to_customer:.2f}')
-print(f'Predicted Speed To Customer (km/h): {predicted_speed_customer[0][0]:.2f}')
-print(f'Predicted Duration To Customer (h) for {month}/{day}: {predicted_duration_customer:.2f} hours')
+        # Print some sample predictions
+        print("Sample predictions:")
+        for i in range(5):
+            print(f"Actual: {y_test[i]}, Predicted: {predictions[i][0]}")
+    else:
+        print(f"\nNo data available for {name} scenario")
