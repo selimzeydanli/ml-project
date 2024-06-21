@@ -101,6 +101,9 @@ if not json_files_found:
     exit()
 
 # Train models and make predictions for each scenario
+# ... (previous code remains unchanged)
+
+# Train models and make predictions for each scenario
 for scenario in scenarios:
     name = scenario["name"]
     if scenario_data[name]["features"]:
@@ -118,7 +121,7 @@ for scenario in scenarios:
 
         # Print some sample predictions
         print("Sample predictions:")
-        for i in range(5):
-            print(f"Actual: {y_test[i]}, Predicted: {predictions[i][0]}")
+        for i in range(10):  # Changed from 5 to 10
+            print(f"Actual: {y_test[i]:.2f}, Predicted: {predictions[i][0]:.2f}")  # Added :.2f for 2 decimal places
     else:
         print(f"\nNo data available for {name} scenario")
