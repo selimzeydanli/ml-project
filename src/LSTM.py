@@ -3,6 +3,8 @@ import json
 import time
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_absolute_error
@@ -12,6 +14,7 @@ from tensorflow.keras.optimizers import Adam
 
 start_time = time.time()
 
+
 # Function to create and train LSTM model
 def create_lstm_model(X_train, y_train, X_test, y_test):
     model = Sequential([
@@ -19,8 +22,9 @@ def create_lstm_model(X_train, y_train, X_test, y_test):
         Dense(1)
     ])
     model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
-    model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=0, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=1, batch_size=32, verbose=0, validation_split=0.2)
     return model
+
 
 # Function to evaluate model
 def evaluate_model(model, X_test, y_test):
@@ -29,12 +33,14 @@ def evaluate_model(model, X_test, y_test):
     mae = mean_absolute_error(y_test, y_pred)
     return r2, mae
 
+
 # Function to make prediction
 def make_prediction(model, scaler_X, scaler_y, distance):
     scaled_distance = scaler_X.transform([[distance]])
     scaled_prediction = model.predict(scaled_distance.reshape(1, 1, 1))
     prediction = scaler_y.inverse_transform(scaled_prediction)
     return prediction[0][0]
+
 
 # Directory containing JSON files
 data_dir = r"C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm"
@@ -52,7 +58,7 @@ for filename in os.listdir(data_dir):
     if filename.endswith('.json'):
         with open(os.path.join(data_dir, filename), 'r') as file:
             data_list = json.load(file)
-            for data in data_list:  # Iterate through each dictionary in the list
+            for data in data_list:
                 distances_supplier.append(data['Distance_To_Supplier(km)'])
                 durations_supplier.append(data['Duration_To_Supplier(h)'])
                 distances_port.append(data['Distance_To_Port(km)'])
@@ -65,8 +71,61 @@ df_supplier = pd.DataFrame({'Distance': distances_supplier, 'Duration': duration
 df_port = pd.DataFrame({'Distance': distances_port, 'Duration': durations_port})
 df_customer = pd.DataFrame({'Distance': distances_customer, 'Duration': durations_customer})
 
-# Function to prepare data, train model, and make predictions
-def process_scenario(df, scenario_name):
+
+def check_fixed_values(df, scenario_name):
+    unique_distances = df['Distance'].nunique()
+    unique_durations = df['Duration'].nunique()
+    print(f"\n{scenario_name} Scenario:")
+    print(f"Unique distance values: {unique_distances}")
+    print(f"Unique duration values: {unique_durations}")
+    return unique_distances == 1
+
+
+def analyze_data(df, scenario_name):
+    print(f"\n{scenario_name} Data Analysis:")
+    print(df.describe())
+
+    plt.figure(figsize=(12, 4))
+
+    plt.subplot(121)
+    sns.histplot(df['Distance'], kde=True)
+    plt.title(f'{scenario_name} Distance Distribution')
+
+    plt.subplot(122)
+    sns.histplot(df['Duration'], kde=True)
+    plt.title(f'{scenario_name} Duration Distribution')
+
+    plt.tight_layout()
+    plt.show()
+
+    correlation = df['Distance'].corr(df['Duration'])
+    print(f"Correlation between Distance and Duration: {correlation:.4f}")
+
+    plt.figure(figsize=(8, 6))
+    sns.scatterplot(x='Distance', y='Duration', data=df)
+    plt.title(f'{scenario_name} Distance vs Duration')
+    plt.show()
+
+
+def process_fixed_scenario(df, scenario_name):
+    mean_duration = df['Duration'].mean()
+    std_duration = df['Duration'].std()
+
+    print(f"\n{scenario_name} Scenario (Fixed Distance):")
+    print(f"Mean Duration: {mean_duration:.2f}")
+    print(f"Standard Deviation of Duration: {std_duration:.2f}")
+
+    distance = df['Distance'].iloc[0]  # Get the fixed distance value
+    print(f"Fixed Distance_To_{scenario_name}(km): {distance:.2f}")
+    print(f"Predicted Duration_To_{scenario_name}(h): {mean_duration:.2f} ± {std_duration:.2f}")
+
+    speed = distance / mean_duration
+    print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
+
+
+def process_variable_scenario(df, scenario_name):
+    analyze_data(df, scenario_name)
+
     X = df['Distance'].values.reshape(-1, 1)
     y = df['Duration'].values.reshape(-1, 1)
 
@@ -81,22 +140,43 @@ def process_scenario(df, scenario_name):
     y_test_scaled = scaler_y.transform(y_test)
 
     model = create_lstm_model(X_train_scaled, y_train_scaled, X_test_scaled, y_test_scaled)
-    r2, mae = evaluate_model(model, X_test_scaled, y_test_scaled)
+
+    # Predict on test data
+    y_pred_scaled = model.predict(X_test_scaled)
+    y_pred = scaler_y.inverse_transform(y_pred_scaled)
+
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
 
     print(f"\n{scenario_name} Scenario:")
     print(f"R-squared: {r2:.4f}")
     print(f"MAE: {mae:.4f}")
 
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_test, y_pred, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+    plt.xlabel('Actual Duration')
+    plt.ylabel('Predicted Duration')
+    plt.title(f'{scenario_name} Actual vs Predicted Duration')
+    plt.show()
+
     distance = float(input(f"Enter Distance_To_{scenario_name}(km): "))
     prediction = make_prediction(model, scaler_X, scaler_y, distance)
     print(f"Predicted Duration_To_{scenario_name}(h): {prediction:.2f}")
 
+    speed = distance / prediction
+    print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
+
     return model, scaler_X, scaler_y
 
-# Process each scenario
-supplier_model, supplier_scaler_X, supplier_scaler_y = process_scenario(df_supplier, "Supplier")
-port_model, port_scaler_X, port_scaler_y = process_scenario(df_port, "Port")
-customer_model, customer_scaler_X, customer_scaler_y = process_scenario(df_customer, "Customer")
+
+# Check and process each scenario
+for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Customer", df_customer)]:
+    is_fixed = check_fixed_values(df, scenario_name)
+    if is_fixed:
+        process_fixed_scenario(df, scenario_name)
+    else:
+        process_variable_scenario(df, scenario_name)
 
 end_time = time.time()
 execution_time = end_time - start_time
