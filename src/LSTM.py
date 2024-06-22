@@ -139,6 +139,20 @@ def process_variable_scenario(df, scenario_name):
 
     return model, scaler_X, scaler_y, float(prediction)
 
+# New function to predict Duration_Loading(h) in supplier scenario
+def predict_loading_duration():
+    loading_times = np.random.uniform(4.5, 13, 1000)  # Simulating loading times between 4.5 and 13 hours
+    predicted_loading_time = np.mean(loading_times)
+    print(f"\nPredicted Duration_Loading(h) at Supplier: {predicted_loading_time:.2f}")
+    return predicted_loading_time
+
+# New function to predict Duration_Unloading(h) in customer scenario
+def predict_unloading_duration():
+    unloading_times = np.random.uniform(3, 5, 1000)  # Simulating unloading times between 3 and 5 hours
+    predicted_unloading_time = np.mean(unloading_times)
+    print(f"\nPredicted Duration_Unloading(h) at Customer: {predicted_unloading_time:.2f}")
+    return predicted_unloading_time
+
 # Directory containing JSON files
 data_dir = r"C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm"
 
@@ -176,11 +190,19 @@ for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Custom
     if is_fixed:
         if scenario_name == "Supplier":
             supplier_duration = process_fixed_scenario(df, scenario_name)
+            predict_loading_duration()  # Predict loading duration for supplier scenario
+        elif scenario_name == "Customer":
+            process_fixed_scenario(df, scenario_name)
+            predict_unloading_duration()  # Predict unloading duration for customer scenario
         else:
             process_fixed_scenario(df, scenario_name)
     else:
         if scenario_name == "Supplier":
             _, _, _, supplier_duration = process_variable_scenario(df, scenario_name)
+            predict_loading_duration()  # Predict loading duration for supplier scenario
+        elif scenario_name == "Customer":
+            process_variable_scenario(df, scenario_name)
+            predict_unloading_duration()  # Predict unloading duration for customer scenario
         else:
             process_variable_scenario(df, scenario_name)
 
