@@ -220,10 +220,13 @@ for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Custom
             _, _, _, customer_duration = process_variable_scenario(df, scenario_name)
             unloading_duration = predict_unloading_duration()
 
-# Get user input for truck needed time
-truck_needed_str = input("When is the truck needed (DD/MM/YYYY HH:MM:SS): ")
-truck_needed = datetime.strptime(truck_needed_str, "%d/%m/%Y %H:%M:%S")
-
+while True:
+    try:
+        truck_needed_str = input("When is the truck needed (DD/MM/YYYY HH:MM:SS), e.g., 11/11/2024 09:00:00: ")
+        truck_needed = datetime.strptime(truck_needed_str, "%d/%m/%Y %H:%M:%S")
+        break
+    except ValueError:
+        print("Invalid date format. Please use DD/MM/YYYY HH:MM:SS.")
 # Calculate when the truck has to leave
 if supplier_duration is not None and port_duration is not None and customer_duration is not None:
     truck_leave = truck_needed - timedelta(hours=supplier_duration)
@@ -240,8 +243,25 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print(f"Arrival at the Port : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
 
     # Adding Ferry-Take-Off Date-Time
-    ferry_delay = 2  # 2 hours delay for ferry take-off after truck arrival
-    ferry_take_off = arrival_at_port + timedelta(hours=ferry_delay)
+    def next_sunday(date):
+        days_until_sunday = (6 - date.weekday() + 7) % 7  # Calculate days until next Sunday
+        next_sunday_date = date + timedelta(
+            days=days_until_sunday
+    )  # Add days to get to next Sunday
+        return next_sunday_date
+
+    # Function to set the time to 23:30
+    def set_time(date):
+        return date.replace(hour=23, minute=30, second=0)
+
+    # Assuming port_arrival is your initial date/time
+    port_arrival = datetime.now()  # Example date/time, replace it with your actual value
+
+    # Calculate the next Sunday
+    next_sunday_date = next_sunday(arrival_at_port)
+
+    # Set the time to 23:30
+    ferry_take_off = set_time(next_sunday_date)
     print(f"Ferry-Take-Off Date-Time : {ferry_take_off.strftime('%d/%m/%Y %H:%M:%S')}")
 
     # Adding Arrival-At-Tarragona-Port
