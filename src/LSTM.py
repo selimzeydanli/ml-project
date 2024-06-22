@@ -195,6 +195,8 @@ df_customer = pd.DataFrame({'Distance': distances_customer, 'Duration': duration
 supplier_duration = None
 port_duration = None
 loading_duration = None
+customer_duration = None
+unloading_duration = None
 
 # Process each scenario
 for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Customer", df_customer)]:
@@ -206,8 +208,8 @@ for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Custom
         elif scenario_name == "Port":
             port_duration = process_fixed_scenario(df, scenario_name)
         elif scenario_name == "Customer":
-            process_fixed_scenario(df, scenario_name)
-            predict_unloading_duration()
+            customer_duration = process_fixed_scenario(df, scenario_name)
+            unloading_duration = predict_unloading_duration()
     else:
         if scenario_name == "Supplier":
             _, _, _, supplier_duration = process_variable_scenario(df, scenario_name)
@@ -215,15 +217,15 @@ for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Custom
         elif scenario_name == "Port":
             _, _, _, port_duration = process_variable_scenario(df, scenario_name)
         elif scenario_name == "Customer":
-            process_variable_scenario(df, scenario_name)
-            predict_unloading_duration()
+            _, _, _, customer_duration = process_variable_scenario(df, scenario_name)
+            unloading_duration = predict_unloading_duration()
 
 # Get user input for truck needed time
 truck_needed_str = input("When is the truck needed (DD/MM/YYYY HH:MM:SS): ")
 truck_needed = datetime.strptime(truck_needed_str, "%d/%m/%Y %H:%M:%S")
 
 # Calculate when the truck has to leave
-if supplier_duration is not None:
+if supplier_duration is not None and port_duration is not None and customer_duration is not None:
     truck_leave = truck_needed - timedelta(hours=supplier_duration)
     print(f"In order to start loading at : {truck_needed.strftime('%d/%m/%Y %H:%M:%S')}")
     print(f"Truck needs to leave previous location : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
@@ -233,12 +235,28 @@ if supplier_duration is not None:
     take_off_time = truck_needed + timedelta(hours=loading_duration)
     print(f"Loading finishes and truck takes off : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
 
-    if port_duration is not None:
-        print(f"Predicted Duration To Port (h): {port_duration:.2f}")
-        arrival_at_port = take_off_time + timedelta(hours=port_duration)
-        print(f"Arrival at the Port : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Predicted Duration To Port (h): {port_duration:.2f}")
+    arrival_at_port = take_off_time + timedelta(hours=port_duration)
+    print(f"Arrival at the Port : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
+
+    # Adding Ferry-Take-Off Date-Time
+    ferry_delay = 2  # 2 hours delay for ferry take-off after truck arrival
+    ferry_take_off = arrival_at_port + timedelta(hours=ferry_delay)
+    print(f"Ferry-Take-Off Date-Time : {ferry_take_off.strftime('%d/%m/%Y %H:%M:%S')}")
+
+    # Adding Arrival-At-Tarragona-Port
+    Arrival_AtTarragona = ferry_take_off + timedelta(hours=72)
+    print(f"Arrival-At-Tarragona-Port : {Arrival_AtTarragona.strftime('%d/%m/%Y %H:%M:%S')}")
+
+    # Adding Arrival_At_Customer
+    Arrival_At_Customer = Arrival_AtTarragona + timedelta(hours=customer_duration)
+    print(f"Arrival_At_Customer : {Arrival_At_Customer.strftime('%d/%m/%Y %H:%M:%S')}")
+
+    # Adding Unloading_Finishes
+    Unloading_Finishes = Arrival_At_Customer + timedelta(hours=unloading_duration)
+    print(f"Unloading Finishes at : {Unloading_Finishes.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
-    print("Error: Supplier duration was not calculated.")
+    print("Error: Some durations were not calculated.")
 
 end_time = time.time()
 execution_time = end_time - start_time
