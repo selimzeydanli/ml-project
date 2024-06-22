@@ -164,6 +164,8 @@ while orderDate <= endLoopDate:
         }
         lat_Tar, lon_Tar = 41.11, 1.25
         lat_Cus, lon_Cus = 42.25, 1.25
+        random_hours1 = random.uniform(4.5, 13)
+        random_hours2 = random.uniform(3, 5)
         job_entry = {}
         for k, truck_trip_information in triptimes.items():
             truck_id = truck_df.loc[k, "TruckID"]
@@ -172,6 +174,8 @@ while orderDate <= endLoopDate:
             available_time = datetime.strptime(available_time_str, "%Y-%m-%d %H:%M:%S")
             tripstart_time = subtract_hours_from_datetime(ready_datetime_str, truck_trip_information["Duration_to_supplier (h)"])
             ready_datetime = datetime.strptime(ready_datetime_str, "%Y-%m-%d %H:%M:%S")
+            take_off_date_time = (ready_datetime + timedelta(hours=random_hours1))
+
             random_speed = round(random.randint(10, 80), 2)
 
             if tripstart_time >= available_time:
@@ -184,10 +188,10 @@ while orderDate <= endLoopDate:
                 ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
                 speed_to_customer = round(random.randint(10, 80), 2)
-                distance_to_customer = haversine(lat_Tar, lon_Tar, lat_Cus, lon_Cus)
+                distance_to_customer = round(haversine(lat_Tar, lon_Tar, lat_Cus, lon_Cus),2)
                 time_to_customer = round(distance_to_customer / speed_to_customer,2)
                 arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
-                unloading_complete_time = arrival_customer + timedelta(hours=6)
+                unloading_complete_time = arrival_customer + timedelta(hours=random_hours2)
                 status = "Free"
 
                 job_entry = {
@@ -206,7 +210,8 @@ while orderDate <= endLoopDate:
                     "Distance_To_Supplier(km)": round(truck_trip_information["Distance_to_supplier"], 2),
                     "Speed_To_Supplier(km/h)": truck_trip_information["Random_Speed (km/h)"],
                     "Duration_To_Supplier(h)": round(truck_trip_information["Duration_to_supplier (h)"], 2),
-                    "Take_off_Date_Time": (ready_datetime + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"),
+                    "Take_off_Date_Time": take_off_date_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Duration_Loading(h)": round((take_off_date_time - ready_datetime).total_seconds()/3600,2),
                     "Port_Latitude": "38.42",
                     "Port_Longitude": "27.14",
                     "Port_Arrival_Date_Time": port_arrival.strftime("%Y-%m-%d %H:%M:%S"),
@@ -216,15 +221,16 @@ while orderDate <= endLoopDate:
                     "Day_Name": day_name,
                     "Ferry_Date_Time": ferry_date_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "Arrival_At_Tarragona": arrival_tarragona.strftime("%Y-%m-%d %H:%M:%S"),
-                    "Tarragona_Latitude": "41.11",
-                    "Tarragona_Longitude": "1.25",
-                    "Customer_Latitude": "42.28",
-                    "Customer_Longitude": "2.45",
+                    "Tarragona_Latitude": lat_Tar,
+                    "Tarragona_Longitude": lon_Tar,
+                    "Customer_Latitude": lat_Cus,
+                    "Customer_Longitude": lon_Cus,
                     "Distance_To_Customer(km)": distance_to_customer,
                     "Speed_To_Customer(km/h)": speed_to_customer,
                     "Duration_To_Customer(h)": time_to_customer,
                     "Arrival_At_Customer": arrival_customer.strftime("%Y-%m-%d %H:%M:%S"),
                     "Unloading_Complete_Date_Time": unloading_complete_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Duration_Unloading(h)": round((unloading_complete_time - arrival_customer).total_seconds() / 3600, 2),
                     "Status": status,
                 }
 
@@ -249,6 +255,7 @@ while orderDate <= endLoopDate:
                 "Speed_To_Supplier(km/h)": "NaN",
                 "Duration_To_Supplier(h)": "NaN",
                 "Take_off_Date_Time": "NaN",
+                "Duration_Loading(h)": "NaN",
                 "Port_Latitude": "NaN",
                 "Port_Longitude": "NaN",
                 "Port_Arrival_Date_Time": "NaN",
@@ -267,6 +274,7 @@ while orderDate <= endLoopDate:
                 "Duration_To_Customer(h)": "NaN",
                 "Arrival_At_Customer": "NaN",
                 "Unloading_Complete_Date_Time": "NaN",
+                "Duration_Unloading(h)": "NaN",
                 "Status": "NaN",
             }
             job_entries.append(job_entry)
