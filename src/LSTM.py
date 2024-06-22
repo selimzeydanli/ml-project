@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 
 start_time = time.time()
 
+
 # Function to create and train LSTM model
 def create_lstm_model(X_train, y_train, X_test, y_test):
     model = Sequential([
@@ -25,6 +26,7 @@ def create_lstm_model(X_train, y_train, X_test, y_test):
     model.fit(X_train, y_train, epochs=1, batch_size=32, verbose=0, validation_split=0.2)
     return model
 
+
 # Function to evaluate model
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
@@ -32,12 +34,14 @@ def evaluate_model(model, X_test, y_test):
     mae = mean_absolute_error(y_test, y_pred)
     return r2, mae
 
+
 # Function to make prediction
 def make_prediction(model, scaler_X, scaler_y, distance):
     scaled_distance = scaler_X.transform([[distance]])
     scaled_prediction = model.predict(scaled_distance.reshape(1, 1, 1))
     prediction = scaler_y.inverse_transform(scaled_prediction)
     return prediction[0][0]
+
 
 # Function to check fixed values
 def check_fixed_values(df, scenario_name):
@@ -47,6 +51,7 @@ def check_fixed_values(df, scenario_name):
     print(f"Unique distance values: {unique_distances}")
     print(f"Unique duration values: {unique_durations}")
     return unique_distances == 1
+
 
 # Function to process fixed scenario
 def process_fixed_scenario(df, scenario_name):
@@ -65,6 +70,7 @@ def process_fixed_scenario(df, scenario_name):
     print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
 
     return float(mean_duration)
+
 
 # Function to analyze data
 def analyze_data(df, scenario_name):
@@ -91,6 +97,7 @@ def analyze_data(df, scenario_name):
     sns.scatterplot(x='Distance', y='Duration', data=df)
     plt.title(f'{scenario_name} Distance vs Duration')
     plt.show()
+
 
 # Function to process variable scenario
 def process_variable_scenario(df, scenario_name):
@@ -139,6 +146,7 @@ def process_variable_scenario(df, scenario_name):
 
     return model, scaler_X, scaler_y, float(prediction)
 
+
 # New function to predict Duration_Loading(h) in supplier scenario
 def predict_loading_duration():
     loading_times = np.random.uniform(4.5, 13, 1000)  # Simulating loading times between 4.5 and 13 hours
@@ -146,12 +154,14 @@ def predict_loading_duration():
     print(f"\nPredicted Duration_Loading(h) at Supplier: {predicted_loading_time:.2f}")
     return predicted_loading_time
 
+
 # New function to predict Duration_Unloading(h) in customer scenario
 def predict_unloading_duration():
     unloading_times = np.random.uniform(3, 5, 1000)  # Simulating unloading times between 3 and 5 hours
     predicted_unloading_time = np.mean(unloading_times)
     print(f"\nPredicted Duration_Unloading(h) at Customer: {predicted_unloading_time:.2f}")
     return predicted_unloading_time
+
 
 # Directory containing JSON files
 data_dir = r"C:\Users\Selim\Desktop\ml-project\data\TransactionDatabases_lstm"
@@ -183,6 +193,8 @@ df_port = pd.DataFrame({'Distance': distances_port, 'Duration': durations_port})
 df_customer = pd.DataFrame({'Distance': distances_customer, 'Duration': durations_customer})
 
 supplier_duration = None
+port_duration = None
+loading_duration = None
 
 # Process each scenario
 for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Customer", df_customer)]:
@@ -190,21 +202,21 @@ for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Custom
     if is_fixed:
         if scenario_name == "Supplier":
             supplier_duration = process_fixed_scenario(df, scenario_name)
-            predict_loading_duration()  # Predict loading duration for supplier scenario
+            loading_duration = predict_loading_duration()
+        elif scenario_name == "Port":
+            port_duration = process_fixed_scenario(df, scenario_name)
         elif scenario_name == "Customer":
             process_fixed_scenario(df, scenario_name)
-            predict_unloading_duration()  # Predict unloading duration for customer scenario
-        else:
-            process_fixed_scenario(df, scenario_name)
+            predict_unloading_duration()
     else:
         if scenario_name == "Supplier":
             _, _, _, supplier_duration = process_variable_scenario(df, scenario_name)
-            predict_loading_duration()  # Predict loading duration for supplier scenario
+            loading_duration = predict_loading_duration()
+        elif scenario_name == "Port":
+            _, _, _, port_duration = process_variable_scenario(df, scenario_name)
         elif scenario_name == "Customer":
             process_variable_scenario(df, scenario_name)
-            predict_unloading_duration()  # Predict unloading duration for customer scenario
-        else:
-            process_variable_scenario(df, scenario_name)
+            predict_unloading_duration()
 
 # Get user input for truck needed time
 truck_needed_str = input("When is the truck needed (DD/MM/YYYY HH:MM:SS): ")
@@ -213,7 +225,18 @@ truck_needed = datetime.strptime(truck_needed_str, "%d/%m/%Y %H:%M:%S")
 # Calculate when the truck has to leave
 if supplier_duration is not None:
     truck_leave = truck_needed - timedelta(hours=supplier_duration)
-    print(f"The truck has to leave: {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"In order to start loading at : {truck_needed.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Truck needs to leave previous location : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Predicted Duration to Supplier (h) : {supplier_duration:.2f}")
+    print(f"Predicted Duration of Loading (h) : {loading_duration:.2f}")
+
+    take_off_time = truck_needed + timedelta(hours=loading_duration)
+    print(f"Loading finishes and truck takes off : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
+
+    if port_duration is not None:
+        print(f"Predicted Duration To Port (h): {port_duration:.2f}")
+        arrival_at_port = take_off_time + timedelta(hours=port_duration)
+        print(f"Arrival at the Port : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
     print("Error: Supplier duration was not calculated.")
 
