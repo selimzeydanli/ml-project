@@ -271,7 +271,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Loading finish / truck take-off             : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print (f"Port Distance (km)                         : {just_port_distance}")
+    print (f"Port Distance (km)                          : {just_port_distance}")
     print ()
     print(f"Predicted Duration To Port (h)              : {port_duration:.2f}")
     print()
