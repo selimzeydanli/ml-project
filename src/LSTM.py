@@ -163,6 +163,8 @@ distances_port = []
 durations_port = []
 distances_customer = []
 durations_customer = []
+loading_times_customers = []
+unloading_times_customers = []
 
 # Iterate through JSON files
 for filename in os.listdir(data_dir):
@@ -176,11 +178,20 @@ for filename in os.listdir(data_dir):
                 durations_port.append(data['Duration_To_Port(h)'])
                 distances_customer.append(data['Distance_To_Customer(km)'])
                 durations_customer.append(data['Duration_To_Customer(h)'])
-
+                loading_times_customers.append(data['Duration_Loading(h)'])
+                unloading_times_customers.append(data['Duration_Unloading(h)'])
 # Create dataframes
 df_supplier = pd.DataFrame({'Distance': distances_supplier, 'Duration': durations_supplier})
 df_port = pd.DataFrame({'Distance': distances_port, 'Duration': durations_port})
 df_customer = pd.DataFrame({'Distance': distances_customer, 'Duration': durations_customer})
+df_loading_times = pd.DataFrame({'loading_times_customers': loading_times_customers})
+mean_loading_duration = df_loading_times['loading_times_customers'].mean()
+std_loading_duration = df_loading_times['loading_times_customers'].std()
+predicted_loading_time = mean_loading_duration + std_loading_duration
+df_unloading_times = pd.DataFrame({'unloading_times_customers': unloading_times_customers})
+mean_unloading_duration = df_unloading_times['unloading_times_customers'].mean()
+std_unloading_duration = df_unloading_times['unloading_times_customers'].std()
+predicted_unloading_time = mean_unloading_duration + std_unloading_duration
 
 supplier_duration = None
 port_duration = None
@@ -222,7 +233,7 @@ while True:
 # Calculate when the truck has to leave
 if supplier_duration is not None and port_duration is not None and customer_duration is not None:
     truck_leave = truck_needed - timedelta(hours=supplier_duration)
-    take_off_time = truck_needed + timedelta(hours=loading_duration)
+    take_off_time = truck_needed + timedelta(hours=predicted_loading_time)
     arrival_at_port = take_off_time + timedelta(hours=port_duration)
     def next_sunday(date):
         days_until_sunday = (6 - date.weekday() + 7) % 7  # Calculate days until next Sunday
@@ -245,7 +256,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     Arrival_At_Tarragona = ferry_take_off + timedelta(hours=72)
     Arrival_At_Customer = Arrival_At_Tarragona + timedelta(hours=customer_duration)
 
-    Unloading_Finishes = Arrival_At_Customer + timedelta(hours=unloading_duration)
+    Unloading_Finishes = Arrival_At_Customer + timedelta(hours=predicted_unloading_time)
 
     print()
     print(f"Within Radius (km)                          : {just_supplier_distance}")
@@ -256,7 +267,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Truck to start for customer                 : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Duration of Loading (h)           : {loading_duration:.2f}")
+    print(f"Predicted Duration of Loading (h)           : {predicted_loading_time:.2f}")
     print()
     print(f"Loading finish / truck take-off             : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
@@ -274,7 +285,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Arrival Customer                            : {Arrival_At_Customer.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Unloading Time (h)                : {unloading_duration:.2f}")
+    print(f"Predicted Unloading Time (h)                : {predicted_unloading_time:.2f}")
     print()
     print(f"Unloading Finish / Truck Free               : {Unloading_Finishes.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
