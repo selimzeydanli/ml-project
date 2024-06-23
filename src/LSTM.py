@@ -230,23 +230,23 @@ while True:
 # Calculate when the truck has to leave
 if supplier_duration is not None and port_duration is not None and customer_duration is not None:
     truck_leave = truck_needed - timedelta(hours=supplier_duration)
-    print(f"In order to start loading at : {truck_needed.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"In order to start loading at                : {truck_needed.strftime('%d/%m/%Y %H:%M:%S')}")
     print ()
-    print(f"Distance Range of Truck : {distances_supplier}")
+    print(f"Distance Range of Truck                     : {distances_supplier}")
     print ()
-    print(f"Truck needs to leave previous location : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Truck needs to leave previous location      : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Duration to Supplier (h) : {supplier_duration:.2f}")
+    print(f"Predicted Duration to Supplier (h)          : {supplier_duration:.2f}")
     print ()
-    print(f"Predicted Duration of Loading (h) : {loading_duration:.2f}")
+    print(f"Predicted Duration of Loading (h)           : {loading_duration:.2f}")
     take_off_time = truck_needed + timedelta(hours=loading_duration)
     print()
-    print(f"Loading finishes and truck takes off : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Loading finishes and truck takes off        : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Duration To Port (h): {port_duration:.2f}")
+    print(f"Predicted Duration To Port (h)              : {port_duration:.2f}")
     arrival_at_port = take_off_time + timedelta(hours=port_duration)
     print()
-    print(f"Arrival at the Port : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Arrival at the Port                         : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
     # Adding Ferry-Take-Off Date-Time
     def next_sunday(date):
@@ -268,24 +268,23 @@ if supplier_duration is not None and port_duration is not None and customer_dura
 
     # Set the time to 23:30
     ferry_take_off = set_time(next_sunday_date)
-    print(f"Ferry-Take-Off Date-Time : {ferry_take_off.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Ferry-Take-Off Date-Time                    : {ferry_take_off.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
     # Adding Arrival-At-Tarragona-Port
     Arrival_At_Tarragona = ferry_take_off + timedelta(hours=72)
-    print(f"Arrival-At-Tarragona-Port : {Arrival_At_Tarragona.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Arrival-At-Tarragona-Port                   : {Arrival_At_Tarragona.strftime('%d/%m/%Y %H:%M:%S')}")
     print ()
-    print(f"Predicted Time To Customer (h): {customer_duration}")
+    print(f"Predicted Time To Customer (h)              : {customer_duration:.2f}")
     print ()
     # Adding Arrival_At_Customer
     Arrival_At_Customer = Arrival_At_Tarragona + timedelta(hours=customer_duration)
-    print(f"Arrival_At_Customer : {Arrival_At_Customer.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Arrival_At_Customer                         : {Arrival_At_Customer.strftime('%d/%m/%Y %H:%M:%S')}")
     # Adding Unloading_Finishes
-    print(f"\nPredicted Duration_Unloading(h) at Customer: {unloading_duration}")
     print ()
-    print(f"Predicted Unloading Time (h): {unloading_duration}")
+    print(f"Predicted Unloading Time (h)                : {unloading_duration:.2f}")
     Unloading_Finishes = Arrival_At_Customer + timedelta(hours=unloading_duration)
     print()
-    print(f"Unloading Finishes at : {Unloading_Finishes.strftime('%d/%m/%Y %H:%M:%S')}")
+    print(f"Unloading Finishes at                       : {Unloading_Finishes.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
     print("Error: Some durations were not calculated.")
 
