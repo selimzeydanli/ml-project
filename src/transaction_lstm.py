@@ -164,8 +164,8 @@ while orderDate <= endLoopDate:
         }
         lat_Tar, lon_Tar = 41.11, 1.25
         lat_Cus, lon_Cus = 42.25, 1.25
-        random_hours1 = random.uniform(4.5, 13)
-        random_hours2 = random.uniform(3, 5)
+        random_hours_loading = random.uniform(4.5, 13)
+        random_hours_unloading = random.uniform(3, 5)
         job_entry = {}
         for k, truck_trip_information in triptimes.items():
             truck_id = truck_df.loc[k, "TruckID"]
@@ -174,7 +174,7 @@ while orderDate <= endLoopDate:
             available_time = datetime.strptime(available_time_str, "%Y-%m-%d %H:%M:%S")
             tripstart_time = subtract_hours_from_datetime(ready_datetime_str, truck_trip_information["Duration_to_supplier (h)"])
             ready_datetime = datetime.strptime(ready_datetime_str, "%Y-%m-%d %H:%M:%S")
-            take_off_date_time = (ready_datetime + timedelta(hours=random_hours1))
+            take_off_date_time = (ready_datetime + timedelta(hours=random_hours_loading))
 
             random_speed = round(random.randint(10, 80), 2)
 
@@ -191,7 +191,7 @@ while orderDate <= endLoopDate:
                 distance_to_customer = round(haversine(lat_Tar, lon_Tar, lat_Cus, lon_Cus),2)
                 time_to_customer = round(distance_to_customer / speed_to_customer,2)
                 arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
-                unloading_complete_time = arrival_customer + timedelta(hours=random_hours2)
+                unloading_complete_time = arrival_customer + timedelta(hours=random_hours_unloading)
                 status = "Free"
 
                 job_entry = {
