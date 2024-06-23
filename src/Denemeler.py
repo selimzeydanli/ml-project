@@ -187,6 +187,7 @@ port_duration = None
 loading_duration = None
 customer_duration = None
 unloading_duration = None
+# deneme
 
 # Process each scenario
 for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Customer", df_customer)]:
