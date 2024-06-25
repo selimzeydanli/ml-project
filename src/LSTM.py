@@ -58,7 +58,9 @@ def process_fixed_scenario(df, scenario_name):
     print(f"Standard Deviation of Duration: {std_duration:.2f}")
 
     distance = df['Distance'].iloc[0]  # Get the fixed distance value
+    print()
     print(f"Fixed Distance_To_{scenario_name}(km): {distance:.2f}")
+    print()
     print(f"Predicted Duration_To_{scenario_name}(h): {mean_duration:.2f} ± {std_duration:.2f}")
 
     speed = distance / mean_duration
@@ -130,10 +132,13 @@ def process_variable_scenario(df, scenario_name):
     plt.title(f'{scenario_name} Actual vs Predicted Duration')
     plt.show()
 
+    print()
     distance = float(input(f"Enter Distance_To_{scenario_name}(km): "))
+    print()
     prediction = make_prediction(model, scaler_X, scaler_y, distance)
+    print()
     print(f"Predicted Duration_To_{scenario_name}(h): {prediction:.2f}")
-
+    print()
     speed = distance / prediction
     print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
 
@@ -151,6 +156,7 @@ def predict_unloading_duration():
     unloading_times = np.random.uniform(3, 5, 1000)  # Simulating unloading times between 3 and 5 hours
     predicted_unloading_time = np.mean(unloading_times)
     print(f"\nPredicted Duration_Unloading(h) at Customer: {predicted_unloading_time:.2f}")
+    print()
     return predicted_unloading_time
 
 # Directory containing JSON files
