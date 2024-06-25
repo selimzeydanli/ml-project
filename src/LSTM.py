@@ -301,5 +301,15 @@ if supplier_duration is not None and port_duration is not None and customer_dura
 else:
     print("Error: Some durations were not calculated.")
 
+# Add these lines at the end of the script
 end_time = time.time()
-execution_time = end_time - start
+execution_time = end_time - start_time
+print(f"\nExecution time: {execution_time:.2f} seconds")
+
+# New function to count and print the number of JSON files
+def print_json_file_count(directory):
+    json_count = sum(1 for filename in os.listdir(directory) if filename.endswith('.json'))
+    print(f"Number of JSON files processed: {json_count}")
+
+# Call the new function
+print_json_file_count(data_dir)
