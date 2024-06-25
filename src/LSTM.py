@@ -16,13 +16,13 @@ from datetime import datetime, timedelta
 start_time = time.time()
 
 # Function to create and train LSTM model
-def create_lstm_model(X_train, y_train, X_test, y_test):
+def create_lstm_model(X_train, y_train, X_val, y_val):
     model = Sequential([
         LSTM(50, activation='relu', input_shape=(X_train.shape[1], 1)),
         Dense(1)
     ])
     model.compile(optimizer=Adam(learning_rate=0.001), loss='mse')
-    model.fit(X_train, y_train, epochs=1, batch_size=32, verbose=0, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=1, batch_size=32, verbose=0, validation_data=(X_val, y_val))
     return model
 
 # Function to evaluate model
@@ -101,17 +101,21 @@ def process_variable_scenario(df, scenario_name):
     X = df['Distance'].values.reshape(-1, 1)
     y = df['Duration'].values.reshape(-1, 1)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Split the data into 80% train, 10% validation, and 10% test
+    X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=0.11111, random_state=42)  # 0.11111 of 90% is 10% of the total
 
     scaler_X = MinMaxScaler()
     scaler_y = MinMaxScaler()
 
     X_train_scaled = scaler_X.fit_transform(X_train).reshape(-1, 1, 1)
     y_train_scaled = scaler_y.fit_transform(y_train)
+    X_val_scaled = scaler_X.transform(X_val).reshape(-1, 1, 1)
+    y_val_scaled = scaler_y.transform(y_val)
     X_test_scaled = scaler_X.transform(X_test).reshape(-1, 1, 1)
     y_test_scaled = scaler_y.transform(y_test)
 
-    model = create_lstm_model(X_train_scaled, y_train_scaled, X_test_scaled, y_test_scaled)
+    model = create_lstm_model(X_train_scaled, y_train_scaled, X_val_scaled, y_val_scaled)
 
     # Predict on test data
     y_pred_scaled = model.predict(X_test_scaled)
@@ -186,6 +190,7 @@ for filename in os.listdir(data_dir):
                 durations_customer.append(data['Duration_To_Customer(h)'])
                 loading_times_customers.append(data['Duration_Loading(h)'])
                 unloading_times_customers.append(data['Duration_Unloading(h)'])
+
 # Create dataframes
 df_supplier = pd.DataFrame({'Distance': distances_supplier, 'Duration': durations_supplier})
 df_port = pd.DataFrame({'Distance': distances_port, 'Duration': durations_port})
@@ -204,7 +209,6 @@ port_duration = None
 loading_duration = None
 customer_duration = None
 unloading_duration = None
-# deneme
 
 # Process each scenario
 for scenario_name, df in [("Supplier", df_supplier), ("Port", df_port), ("Customer", df_customer)]:
@@ -277,8 +281,8 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Loading finish / truck take-off             : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print (f"Port Distance (km)                          : {just_port_distance}")
-    print ()
+    print(f"Port Distance (km)                          : {just_port_distance}")
+    print()
     print(f"Predicted Duration To Port (h)              : {port_duration:.2f}")
     print()
     print(f"Arrival Alsancak Port                       : {arrival_at_port.strftime('%d/%m/%Y %H:%M:%S')}")
@@ -298,5 +302,4 @@ else:
     print("Error: Some durations were not calculated.")
 
 end_time = time.time()
-execution_time = end_time - start_time
-print(f"\nExecution time: {execution_time:.2f} seconds")
+execution_time = end_time - start
