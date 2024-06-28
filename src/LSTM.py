@@ -262,7 +262,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
 
     Arrival_At_Tarragona = ferry_take_off + timedelta(hours=72)
     Arrival_At_Customer = Arrival_At_Tarragona + timedelta(hours=customer_duration)
-
+    a.
     Unloading_Finishes = Arrival_At_Customer + timedelta(hours=predicted_unloading_time)
 
     print()
