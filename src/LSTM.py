@@ -60,10 +60,11 @@ def process_fixed_scenario(df, scenario_name):
     distance = df['Distance'].iloc[0]  # Get the fixed distance value
     print()
     print(f"Fixed Distance_To_{scenario_name}(km): {distance:.2f}")
+    print ()
 
     speed = distance / mean_duration
     print(f"Average Speed To {scenario_name}(km/h)      : {speed:.2f}")
-
+    print()
     return float(mean_duration)
 
 # Function to analyze data
@@ -265,7 +266,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     Unloading_Finishes = Arrival_At_Customer + timedelta(hours=predicted_unloading_time)
 
     print()
-    print(f"Within Radius (km)                          : {just_supplier_distance}")
+    print(f"Within a Radius of                          : {just_supplier_distance}")
     print()
     print(f"For a Response Time of (h)                  : {supplier_duration:.2f}")
     print()
@@ -273,7 +274,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Truck to start for customer                 : {truck_leave.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Duration of Loading (h)           : {predicted_loading_time:.2f}")
+    print(f"Predicted Duration of Loading & Waiting(h)  : {predicted_loading_time:.2f}")
     print()
     print(f"Loading finish / truck take-off             : {take_off_time.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
@@ -291,7 +292,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
     print()
     print(f"Arrival Customer                            : {Arrival_At_Customer.strftime('%d/%m/%Y %H:%M:%S')}")
     print()
-    print(f"Predicted Unloading Time (h)                : {predicted_unloading_time:.2f}")
+    print(f"Predicted Duration of Unloading &Waiting (h): {predicted_unloading_time:.2f}")
     print()
     print(f"Unloading Finish / Truck Free               : {Unloading_Finishes.strftime('%d/%m/%Y %H:%M:%S')}")
 else:
