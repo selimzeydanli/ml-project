@@ -60,11 +60,9 @@ def process_fixed_scenario(df, scenario_name):
     distance = df['Distance'].iloc[0]  # Get the fixed distance value
     print()
     print(f"Fixed Distance_To_{scenario_name}(km): {distance:.2f}")
-    print()
-    print(f"Predicted Duration_To_{scenario_name}(h): {mean_duration:.2f} ± {std_duration:.2f}")
 
     speed = distance / mean_duration
-    print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
+    print(f"Average Speed To {scenario_name}(km/h)      : {speed:.2f}")
 
     return float(mean_duration)
 
@@ -141,10 +139,10 @@ def process_variable_scenario(df, scenario_name):
     print()
     prediction = make_prediction(model, scaler_X, scaler_y, distance)
     print()
-    print(f"Predicted Duration_To_{scenario_name}(h): {prediction:.2f}")
+    print(f"Predicted Duration_To_{scenario_name}(h)                : {prediction:.2f}")
     print()
     speed = distance / prediction
-    print(f"Average Speed To {scenario_name}(km/h): {speed:.2f}")
+    print(f"Average Speed To {scenario_name}(km/h)                  : {speed:.2f}")
 
     return model, scaler_X, scaler_y, float(prediction), distance
 
@@ -152,15 +150,13 @@ def process_variable_scenario(df, scenario_name):
 def predict_loading_duration():
     loading_times = np.random.uniform(4.5, 13, 1000)  # Simulating loading times between 4.5 and 13 hours
     predicted_loading_time = np.mean(loading_times)
-    print(f"\nPredicted Duration_Loading(h) at Supplier: {predicted_loading_time:.2f}")
     return predicted_loading_time
+
 
 # New function to predict Duration_Unloading(h) in customer scenario
 def predict_unloading_duration():
     unloading_times = np.random.uniform(3, 5, 1000)  # Simulating unloading times between 3 and 5 hours
     predicted_unloading_time = np.mean(unloading_times)
-    print(f"\nPredicted Duration_Unloading(h) at Customer: {predicted_unloading_time:.2f}")
-    print()
     return predicted_unloading_time
 
 # Directory containing JSON files
