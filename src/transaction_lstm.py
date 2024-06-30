@@ -145,7 +145,7 @@ while orderDate <= endLoopDate:
                 "Departure_Latitude": v["Dep. Lat"],
                 "Departure_Longitude": v["Dep. Lon"],
                 "Distance_to_supplier": haversine(supplier_latitude, supplier_longitude, v["Dep. Lat"], v["Dep. Lon"]),
-                "Random_Speed (km/h)": round(random.randint(10, 80), 2)
+                "Random_Speed (km/h)": round(random.uniform(10, 80), 2)
                 } for k, v in truck_locations.items()
         }
 
@@ -176,7 +176,7 @@ while orderDate <= endLoopDate:
             ready_datetime = datetime.strptime(ready_datetime_str, "%Y-%m-%d %H:%M:%S")
             take_off_date_time = (ready_datetime + timedelta(hours=random_hours_loading))
 
-            random_speed = round(random.randint(10, 80), 2)
+            random_speed = round(random.uniform(10, 80), 2)
 
             if tripstart_time >= available_time:
                 dist_to_port = haversine(port_lat, port_long, supplier_latitude, supplier_longitude)
@@ -187,7 +187,7 @@ while orderDate <= endLoopDate:
                 ferry_date_time = next_sunday(port_arrival)
                 ferry_date_time = set_time(ferry_date_time)
                 arrival_tarragona = ferry_date_time + timedelta(hours=72)
-                speed_to_customer = round(random.randint(10, 80), 2)
+                speed_to_customer = round(random.uniform(10, 80), 2)
                 distance_to_customer = round(haversine(lat_Tar, lon_Tar, lat_Cus, lon_Cus),2)
                 time_to_customer = round(distance_to_customer / speed_to_customer,2)
                 arrival_customer = arrival_tarragona + timedelta(hours=time_to_customer)
