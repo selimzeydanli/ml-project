@@ -54,16 +54,18 @@ def process_fixed_scenario(df, scenario_name):
     std_duration = df['Duration'].std()
 
     print(f"\n{scenario_name} Scenario (Fixed Distance):")
-    print(f"Mean Duration: {mean_duration:.2f}")
+    #print(f"Mean Duration: {mean_duration:.2f}")
     print(f"Standard Deviation of Duration: {std_duration:.2f}")
 
     distance = df['Distance'].iloc[0]  # Get the fixed distance value
     print()
-    print(f"Fixed Distance_To_{scenario_name}(km): {distance:.2f}")
+    print(f"Distance_To_{scenario_name}(km)     : {distance:.2f}")
     print ()
 
     speed = distance / mean_duration
-    print(f"Average Speed To {scenario_name}(km/h)      : {speed:.2f}")
+    print(f"Predicted Duration To {scenario_name} (h): {mean_duration:.2f}")
+    print()
+    print(f"Predicted Speed To {scenario_name}(km/h)      : {speed:.2f}")
     print()
     return float(mean_duration)
 
@@ -262,7 +264,7 @@ if supplier_duration is not None and port_duration is not None and customer_dura
 
     Arrival_At_Tarragona = ferry_take_off + timedelta(hours=72)
     Arrival_At_Customer = Arrival_At_Tarragona + timedelta(hours=customer_duration)
-    a.
+
     Unloading_Finishes = Arrival_At_Customer + timedelta(hours=predicted_unloading_time)
 
     print()
