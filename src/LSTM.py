@@ -63,9 +63,9 @@ def process_fixed_scenario(df, scenario_name):
     print ()
 
     speed = distance / mean_duration
-    print(f"Predicted Duration To {scenario_name} (h): {mean_duration:.2f}")
+    print(f"Predicted Duration To {scenario_name}(h)        : {mean_duration:.2f}")
     print()
-    print(f"Predicted Speed To {scenario_name}(km/h)      : {speed:.2f}")
+    print(f"Predicted Speed To {scenario_name}(km/h)        : {speed:.2f}")
     print()
     return float(mean_duration)
 
@@ -142,10 +142,10 @@ def process_variable_scenario(df, scenario_name):
     print()
     prediction = make_prediction(model, scaler_X, scaler_y, distance)
     print()
-    print(f"Predicted Duration_To_{scenario_name}(h)                : {prediction:.2f}")
+    print(f"Predicted Duration_To_{scenario_name}(h)            : {prediction:.2f}")
     print()
     speed = distance / prediction
-    print(f"Average Speed To {scenario_name}(km/h)                  : {speed:.2f}")
+    print(f"Predicted Speed To {scenario_name}(km/h)            : {speed:.2f}")
 
     return model, scaler_X, scaler_y, float(prediction), distance
 
