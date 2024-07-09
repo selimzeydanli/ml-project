@@ -83,24 +83,27 @@ def analyze_data(df, scenario_name):
     plt.title(f'{scenario_name} Distance vs Duration')
     plt.show()
 
-# Function to process variable scenario with cross-validation
+# Function to process variable scenario with cross-validation and test set
 def process_variable_scenario(df, scenario_name):
     analyze_data(df, scenario_name)
 
     X = df['Distance'].values.reshape(-1, 1)
     y = df['Duration'].values.reshape(-1, 1)
 
-    # Initialize K-Fold
+    # Split into train+validation and test sets
+    X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+
+    # Initialize K-Fold for cross-validation
     k_fold = KFold(n_splits=5, shuffle=True, random_state=42)
 
-    # Lists to store results
-    r2_scores = []
-    mae_scores = []
+    # Lists to store cross-validation results
+    cv_r2_scores = []
+    cv_mae_scores = []
 
     # Perform k-fold cross-validation
-    for fold, (train_idx, val_idx) in enumerate(k_fold.split(X), 1):
-        X_train, X_val = X[train_idx], X[val_idx]
-        y_train, y_val = y[train_idx], y[val_idx]
+    for fold, (train_idx, val_idx) in enumerate(k_fold.split(X_train_val), 1):
+        X_train, X_val = X_train_val[train_idx], X_train_val[val_idx]
+        y_train, y_val = y_train_val[train_idx], y_train_val[val_idx]
 
         scaler_X = MinMaxScaler()
         scaler_y = MinMaxScaler()
@@ -120,25 +123,38 @@ def process_variable_scenario(df, scenario_name):
         r2 = r2_score(y_val, y_pred)
         mae = mean_absolute_error(y_val, y_pred)
 
-        r2_scores.append(r2)
-        mae_scores.append(mae)
+        cv_r2_scores.append(r2)
+        cv_mae_scores.append(mae)
 
-        print(f"\n{scenario_name} Scenario - Fold {fold}:")
+        print(f"\n{scenario_name} Scenario - Cross-validation Fold {fold}:")
         print(f"R-squared: {r2:.4f}")
         print(f"MAE: {mae:.4f}")
 
-    # Calculate and print average scores
-    print(f"\n{scenario_name} Scenario - Average Scores:")
-    print(f"Average R-squared: {np.mean(r2_scores):.4f} (+/- {np.std(r2_scores):.4f})")
-    print(f"Average MAE: {np.mean(mae_scores):.4f} (+/- {np.std(mae_scores):.4f})")
+    # Print cross-validation results
+    print(f"\n{scenario_name} Scenario - Cross-validation Average Scores:")
+    print(f"Average R-squared: {np.mean(cv_r2_scores):.4f} (+/- {np.std(cv_r2_scores):.4f})")
+    print(f"Average MAE: {np.mean(cv_mae_scores):.4f} (+/- {np.std(cv_mae_scores):.4f})")
 
-    # Train final model on all data for predictions
+    # Train final model on all train+validation data
     scaler_X_final = MinMaxScaler()
     scaler_y_final = MinMaxScaler()
-    X_scaled_final = scaler_X_final.fit_transform(X).reshape(-1, 1, 1)
-    y_scaled_final = scaler_y_final.fit_transform(y)
-    final_model = create_lstm_model(X_scaled_final, y_scaled_final, X_scaled_final, y_scaled_final)
+    X_train_val_scaled = scaler_X_final.fit_transform(X_train_val).reshape(-1, 1, 1)
+    y_train_val_scaled = scaler_y_final.fit_transform(y_train_val)
+    final_model = create_lstm_model(X_train_val_scaled, y_train_val_scaled, X_train_val_scaled, y_train_val_scaled)
 
+    # Evaluate on test set
+    X_test_scaled = scaler_X_final.transform(X_test).reshape(-1, 1, 1)
+    y_test_pred_scaled = final_model.predict(X_test_scaled)
+    y_test_pred = scaler_y_final.inverse_transform(y_test_pred_scaled)
+
+    test_r2 = r2_score(y_test, y_test_pred)
+    test_mae = mean_absolute_error(y_test, y_test_pred)
+
+    print(f"\n{scenario_name} Scenario - Test Set Performance:")
+    print(f"Test R-squared: {test_r2:.4f}")
+    print(f"Test MAE: {test_mae:.4f}")
+
+    # Get user input and make prediction
     print()
     distance = float(input(f"Enter Distance_To_{scenario_name}(km): "))
     print()
@@ -300,10 +316,12 @@ end_time = time.time()
 execution_time = end_time - start_time
 print(f"\nExecution time: {execution_time:.2f} seconds")
 
+
 # New function to count and print the number of JSON files
 def print_json_file_count(directory):
     json_count = sum(1 for filename in os.listdir(directory) if filename.endswith('.json'))
     print(f"Number of JSON files processed: {json_count}")
+
 
 # Call the new function
 print_json_file_count(data_dir)
