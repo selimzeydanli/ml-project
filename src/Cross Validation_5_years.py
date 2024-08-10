@@ -1,6 +1,4 @@
-Certainly. Here's the entire modified code incorporating cross-validation, from beginning to end:
 
-```python
 import os
 import json
 import time
