@@ -114,7 +114,7 @@ def process_variable_scenario(df, scenario_name):
     X_test_scaled = scaler_X.transform(X_test)
     y_test_scaled = scaler_y.transform(y_test)
 
-    # Perform k-fold cross-validation
+    # Perform k-fold cross-validation for performance evaluation
     k = 5
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
     r2_scores = []
