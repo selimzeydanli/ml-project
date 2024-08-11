@@ -46,6 +46,7 @@ def process_scenario_with_cv(df, scenario_name):
     X_scaled = scaler_X.fit_transform(X)
     y_scaled = scaler_y.fit_transform(y)
 
+# cross validation for performance evaluation across different time zones in dataset
     tscv = TimeSeriesSplit(n_splits=5)
 
     r2_scores = []
