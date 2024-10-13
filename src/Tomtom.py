@@ -21,7 +21,7 @@ def get_distance(api_key, start_lat, start_lon, end_lat, end_lon):
     else:
         return None
 
-
+#
 def main():
     # Replace 'coordinates.json' with your JSON file path
     #spot1, spot2 = load_coordinates('coordinates.json')
