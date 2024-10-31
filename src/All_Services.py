@@ -10,16 +10,19 @@ from datetime import datetime
 # Setting up the logging configuration
 logging.basicConfig(level=logging.INFO)
 
+
 @dataclass
 class Coordinates:
     lat: float
     lon: float
+
 
 @dataclass
 class DistanceResult:
     distance_km: Optional[float]
     service_name: str
     error: Optional[str] = None
+
 
 class MultiServiceDistanceCalculator:
     def __init__(self, api_keys):
@@ -32,6 +35,7 @@ class MultiServiceDistanceCalculator:
             return DistanceResult(distance_km=distance_km, service_name="MockService")
         except Exception as e:
             return DistanceResult(distance_km=None, service_name="MockService", error=str(e))
+
 
 class DistanceProcessor:
     def __init__(self, input_path: str, output_path: str, calculator: MultiServiceDistanceCalculator):
@@ -100,24 +104,40 @@ class DistanceProcessor:
                     result = self.calculator.get_distance(start, end)
 
                     if result.distance_km is not None:
-                        # Add "Distance(km)" key before "Duration_To_Port(h)"
-                        item['Distance(km)'] = result.distance_km
-                        item['distance_source'] = result.service_name
+                        # Adding the distance and keeping order
+                        item['Distance(km)'] = result.distance_km  # Add Distance(km) key
+                        item['distance_source'] = result.service_name  # Optional, depending on your needs
+
+                        # Reorder keys to ensure "Distance(km)" comes before "Duration_To_Port(h)"
+                        if 'Duration_To_Port(h)' in item:
+                            new_item = {
+                                'Order_ID': item['Order_ID'],
+                                'Order_Date': item['Order_Date'],
+                                'Ready_Date_Time': item['Ready_Date_Time'],
+                                'Sup_ID': item['Sup_ID'],
+                                'Trailer_Type': item['Trailer_Type'],
+                                'Supplier_Latitude': item['Supplier_Latitude'],
+                                'Supplier_Longitude': item['Supplier_Longitude'],
+                                'Loading_Start_Time': item['Loading_Start_Time'],
+                                'Loading_End_Time': item['Loading_End_Time'],
+                                'Duration_Loading(h)': item['Duration_Loading(h)'],
+                                'Departure_Time': item['Departure_Time'],
+                                'Route_Mode': item['Route_Mode'],
+                                'PORT_NAME': item['PORT_NAME'],
+                                'Port_Latitude': item['Port_Latitude'],
+                                'Port_Longitude': item['Port_Longitude'],
+                                'Port_Arrival_Date': item['Port_Arrival_Date'],
+                                'Distance(km)': item['Distance(km)'],  # Positioning Distance before Duration
+                                'Duration_To_Port(h)': item['Duration_To_Port(h)']  # Retaining original duration
+                            }
+                            item.clear()  # Clear the old item data
+                            item.update(new_item)  # Update with new ordered data
+
                         progress[item_id] = {
-                            'Distance(km)': result.distance_km,
+                            'distance_km': result.distance_km,
                             'distance_source': result.service_name,
                             'timestamp': datetime.now().isoformat()
                         }
-
-                        # Keep the original item structure
-                        if 'Duration_To_Port(h)' in item:
-                            item['Distance(km)'] = result.distance_km
-                            # Move "Distance(km)" before "Duration_To_Port(h)"
-                            item['Distance(km)'] = result.distance_km
-                            new_item = {k: item[k] for k in list(item) if k == 'Distance(km)' or k != 'Duration_To_Port(h)'}
-                            new_item['Duration_To_Port(h)'] = item['Duration_To_Port(h)']
-                            item.clear()
-                            item.update(new_item)
 
                         self.processed_since_last_save += 1
 
@@ -141,6 +161,7 @@ class DistanceProcessor:
             if 'data' in locals():
                 self.save_current_results(data)
             raise
+
 
 def main():
     logging.basicConfig(
@@ -176,6 +197,7 @@ def main():
     except Exception as e:
         logger.error(f"Program failed with error: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     main()
