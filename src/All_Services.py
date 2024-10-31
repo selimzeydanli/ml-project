@@ -100,13 +100,24 @@ class DistanceProcessor:
                     result = self.calculator.get_distance(start, end)
 
                     if result.distance_km is not None:
-                        item['distance_km'] = result.distance_km
+                        # Add "Distance(km)" key before "Duration_To_Port(h)"
+                        item['Distance(km)'] = result.distance_km
                         item['distance_source'] = result.service_name
                         progress[item_id] = {
-                            'distance_km': result.distance_km,
+                            'Distance(km)': result.distance_km,
                             'distance_source': result.service_name,
                             'timestamp': datetime.now().isoformat()
                         }
+
+                        # Keep the original item structure
+                        if 'Duration_To_Port(h)' in item:
+                            item['Distance(km)'] = result.distance_km
+                            # Move "Distance(km)" before "Duration_To_Port(h)"
+                            item['Distance(km)'] = result.distance_km
+                            new_item = {k: item[k] for k in list(item) if k == 'Distance(km)' or k != 'Duration_To_Port(h)'}
+                            new_item['Duration_To_Port(h)'] = item['Duration_To_Port(h)']
+                            item.clear()
+                            item.update(new_item)
 
                         self.processed_since_last_save += 1
 
