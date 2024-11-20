@@ -11,6 +11,14 @@ from enum import Enum
 import time
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
+import json
+import requests
+import os
+import time
+from typing import List, Dict, Optional, Union
+from datetime import datetime
+import logging
+from pathlib import Path
 
 
 # Type definitions for better type safety
@@ -136,18 +144,28 @@ class MultiServiceDistanceCalculator:
             return DistanceResult(None, "system", "No available services")
 
         service = self.services[service_name]
+        self.base_url = "https://api.tomtom.com/routing/1/calculateRoute"
+        url = f"{self.base_url}/{start.lat},{start.lon}:{end.lat},{end.lon}/json"
+        params = {
+            'key': service.api_key,
+            'routeType': 'fastest',
+            'travelMode': 'truck',  # Changed to truck for more accurate commercial routing
+            'avoid': 'unpavedRoads',
+            'vehicleMaxSpeed': 90  # Typical truck speed limit in km/h
+        }
 
         try:
-            # Simulate API call with possible failures
-            if random.random() < 0.05:  # 5% chance of failure
-                raise Exception("API temporary error")
-
-            distance_km = random.uniform(5, 1000)  # Placeholder for actual calculation
-            service.reset_errors()
+            response = requests.get(url, params=params, timeout=15)
+            response.raise_for_status()
+            distance_data = response.json()
+            distance_km = distance_data['routes'][0]['summary']['lengthInMeters']/1000.0
             return DistanceResult(distance_km=distance_km, service_name=service_name)
 
-        except Exception as e:
-            service.mark_error()
+        except requests.exceptions.RequestException as e:
+            logging.error(f"API request failed: {str(e)}")
+            return DistanceResult(None, service_name, str(e))
+        except (KeyError, IndexError) as e:
+            logging.error(f"Error parsing API response: {str(e)}")
             return DistanceResult(None, service_name, str(e))
 
 
@@ -266,6 +284,7 @@ class DistanceProcessor:
             if not self.validate_input_data(data):
                 raise ValueError("Invalid input data format")
 
+
             progress = self.load_progress()
             total_items = len(data)
             processed_count = len(progress)
@@ -313,14 +332,14 @@ def main():
 
     api_keys = {
         'tomtom': '4iQviYFRJ2pHD7GgSvzLsaFUvyejWWav',
-        'here': '1vlQX4aF5gJIFiRNBpD4USymG9rU_FWIc6Vdc14amWM',
-        'graphhopper': 'YOUR_GRAPHHOPPER_KEY',
-        'mapbox': 'YOUR_MAPBOX_KEY',
-        'google': 'YOUR_GOOGLE_KEY'
+        #'here': '1vlQX4aF5gJIFiRNBpD4USymG9rU_FWIc6Vdc14amWM',
+        #'graphhopper': 'YOUR_GRAPHHOPPER_KEY',
+        #'mapbox': 'YOUR_MAPBOX_KEY',
+        #'google': 'YOUR_GOOGLE_KEY'
     }
 
-    input_path = "Deneme.json"
-    output_path = Path("C:/Users/Selim/Desktop/Updated.json")
+    input_path = Path("C:/Users/Selim/Desktop/Deneme.json")
+    output_path = Path("C:/Users/Selim/Desktop/Deneme.json")
 
     try:
         calculator = MultiServiceDistanceCalculator(api_keys)
