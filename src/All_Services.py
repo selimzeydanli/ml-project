@@ -176,7 +176,7 @@ class DistanceProcessor:
         self.calculator = calculator
         self.progress_file = self.output_path.parent / f"{self.output_path.stem}_progress.json"
         self.logger = logging.getLogger(__name__)
-        self.save_interval = 500
+        self.save_interval = 10
         self._processed_count = 0
         self.required_fields = {
             'Order_ID', 'Order_Date', 'Ready_Date_Time', 'Sup_ID', 'Trailer_Type',
@@ -339,7 +339,7 @@ def main():
     }
 
     input_path = Path("C:/Users/Selim/Desktop/Deneme.json")
-    output_path = Path("C:/Users/Selim/Desktop/Deneme.json")
+    output_path = Path("C:/Users/Selim/Desktop/Deneme2.json")
 
     try:
         calculator = MultiServiceDistanceCalculator(api_keys)
