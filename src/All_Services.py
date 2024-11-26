@@ -199,6 +199,7 @@ class DistanceProcessor:
         return True
 
     def load_progress(self) -> Dict[str, ProgressEntry]:
+        return {}
         if self.progress_file.exists():
             try:
                 with open(self.progress_file, 'r', encoding='utf-8') as f:
@@ -233,7 +234,9 @@ class DistanceProcessor:
 
     def process_item(self, item: Dict[str, Any], progress: Dict[str, ProgressEntry]) -> bool:
         item_id = str(item.get('Order_ID', ''))
-
+        if 'timestamp' in item:
+            self.logger.warning("Skipping Item")
+            return True
         if not item_id:
             self.logger.error("Item missing Order_ID")
             return False
@@ -258,6 +261,7 @@ class DistanceProcessor:
 
         if result.distance_km is not None:
             item['Distance(km)'] = result.distance_km
+            item['timestamp'] = datetime.now().isoformat()
             item['distance_source'] = result.service_name
 
             progress[item_id] = {
@@ -339,7 +343,7 @@ def main():
     }
 
     input_path = Path("C:/Users/Selim/Desktop/Deneme.json")
-    output_path = Path("C:/Users/Selim/Desktop/Deneme2.json")
+    output_path = Path("C:/Users/Selim/Desktop/Deneme.json")
 
     try:
         calculator = MultiServiceDistanceCalculator(api_keys)
